@@ -27,11 +27,17 @@ loginForm.addEventListener("submit", async function(e) {
       .eq("id", data.user.id)
       .single();
 
-  if (profileError || !profile) {
-    await supabaseClient.auth.signOut();
-    message.textContent = "Profil pengguna tidak ditemukan";
-    return;
-  }
+  if (profileError) {
+  message.textContent = "Gagal mengambil profil: " + profileError.message;
+  await supabaseClient.auth.signOut();
+  return;
+}
+
+if (!profile) {
+  await supabaseClient.auth.signOut();
+  message.textContent = "Profil pengguna tidak ditemukan";
+  return;
+}
 
   if (profile.role === "admin") {
     window.location.href = "admin.html";
