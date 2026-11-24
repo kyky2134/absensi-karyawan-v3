@@ -1,5 +1,5 @@
-const SUPABASE_URL = "ISI_PROJECT_URL";
-const SUPABASE_KEY = "ISI_PUBLISHABLE_KEY";
+const SUPABASE_URL = "https://oxurtjgrblgxjpbwzrcw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_BtmiqYPJveOjm74kVjPpOw_67UnYNLi";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
