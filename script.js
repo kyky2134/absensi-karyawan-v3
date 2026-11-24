@@ -1,3 +1,4 @@
+
 const loginForm = document.getElementById("loginForm");
 const message = document.getElementById("message");
 
@@ -7,7 +8,7 @@ loginForm.addEventListener("submit", async function(e) {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  message.textContent = "Sedang memproses login...";
+  message.textContent = "Sedang login...";
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({
     email,
@@ -15,9 +16,26 @@ loginForm.addEventListener("submit", async function(e) {
   });
 
   if (error) {
-    message.textContent = error.message;
+    message.textContent = "Email atau password salah";
     return;
   }
 
-  message.textContent = "Login berhasil!";
+  const { data: profile, error: profileError } =
+    await supabaseClient
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+  if (profileError || !profile) {
+    await supabaseClient.auth.signOut();
+    message.textContent = "Profil pengguna tidak ditemukan";
+    return;
+  }
+
+  if (profile.role === "admin") {
+    window.location.href = "admin.html";
+  } else {
+    window.location.href = "karyawan.html";
+  }
 });
