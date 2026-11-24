@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AttendPro - Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>AttendPro</h1>
+  <p>Administrator Dashboard</p>
+
+  <h2>Dashboard Admin</h2>
+
+  <section>
+    <h3>Menu Administrator</h3>
+    <button onclick="alert('Menu Data Karyawan')">Data Karyawan</button>
+    <button onclick="alert('Menu Data Absensi')">Data Absensi</button>
+    <button onclick="alert('Menu Lokasi Kantor')">Lokasi Kantor</button>
+    <button onclick="alert('Menu Laporan')">Laporan</button>
+    <button onclick="logout()">Keluar</button>
+  </section>
+
+  <p id="adminMessage">Memuat dashboard...</p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+
+</body>
+</html>
