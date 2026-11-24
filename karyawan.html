@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AttendPro - Karyawan</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>AttendPro</h1>
+  <p>Employee Dashboard</p>
+
+  <h2>Dashboard Karyawan</h2>
+
+  <section>
+    <h3>Profil Karyawan</h3>
+
+    <p id="employeeName">Memuat profil...</p>
+
+    <form id="profileForm">
+      <input
+        type="text"
+        id="nama"
+        placeholder="Nama lengkap"
+        required
+      >
+
+      <input
+        type="text"
+        id="nomorPaspor"
+        placeholder="Nomor paspor"
+        required
+      >
+
+      <button type="submit">Simpan Profil</button>
+    </form>
+
+    <h3>Verifikasi Wajah</h3>
+    <p id="faceMessage">
+      Fitur verifikasi wajah akan disiapkan pada tahap berikutnya.
+    </p>
+
+    <h3>Absensi</h3>
+    <button id="checkInButton" disabled>Absen Masuk</button>
+    <button id="checkOutButton" disabled>Absen Pulang</button>
+
+    <button onclick="logout()">Keluar</button>
+  </section>
+
+  <p id="employeeMessage"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="karyawan.js"></script>
+
+</body>
+</html>
