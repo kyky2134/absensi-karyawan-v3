@@ -31,3 +31,49 @@ async function logout() {
 }
 
 checkAdmin();
+
+
+async function ambilLokasiKantor() {
+  const message = document.getElementById("lokasiMessage");
+
+  if (!navigator.geolocation) {
+    message.textContent = "GPS tidak didukung perangkat ini.";
+    return;
+  }
+
+  message.textContent = "Mengambil lokasi GPS...";
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      const { error } = await supabaseClient.rpc(
+        "set_office_location",
+        {
+          p_latitude: latitude,
+          p_longitude: longitude,
+          p_radius: 100
+        }
+      );
+
+      if (error) {
+        message.textContent = "Gagal menyimpan: " + error.message;
+        return;
+      }
+
+      message.textContent =
+        "Lokasi kantor berhasil disimpan. Radius 100 meter.";
+    },
+    (error) => {
+      message.textContent =
+        "GPS gagal: " + error.message;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+  );
+}
+
