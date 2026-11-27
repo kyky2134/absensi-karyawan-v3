@@ -1,47 +1,86 @@
 
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AttendPro - Admin Dashboard</title>
+  <title>Admin Dashboard - AttendPro</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body class="admin-page">
 
-  <h1>AttendPro</h1>
-  <p>Administrator Dashboard</p>
+  <header>
+    <h1>AttendPro</h1>
+    <p id="adminMessage">Memuat dashboard...</p>
+    <button onclick="logout()">Logout</button>
+  </header>
 
-  <h2>Dashboard Admin</h2>
+  <main>
+    <section>
+      <h2>Dashboard Admin</h2>
+      <p>Selamat datang di halaman administrator AttendPro.</p>
+    </section>
 
-  <section>
-    <h3>Menu Administrator</h3>
-    <h3>Daftarkan Karyawan Baru</h3>
+    <section>
+      <h2>Daftarkan Karyawan Baru</h2>
 
-<form id="tambahKaryawanForm">
-  <input type="text" id="namaKaryawan"
-    placeholder="Nama lengkap karyawan" required>
+      <form id="tambahKaryawanForm">
+        <label for="namaKaryawan">Nama Karyawan</label>
+        <input
+          type="text"
+          id="namaKaryawan"
+          placeholder="Masukkan nama karyawan"
+          required
+        >
 
-  <input type="email" id="emailKaryawan"
-    placeholder="Email karyawan" required>
+        <label for="emailKaryawan">Email Karyawan</label>
+        <input
+          type="email"
+          id="emailKaryawan"
+          placeholder="Masukkan email karyawan"
+          required
+        >
 
-  <button type="submit">Daftarkan Karyawan</button>
-</form>
+        <button type="submit">Daftarkan Karyawan</button>
+      </form>
 
-<p id="tambahKaryawanMessage"></p>
-    <button onclick="alert('Menu Data Karyawan')">Data Karyawan</button>
-    <button onclick="alert('Menu Data Absensi')">Data Absensi</button>
-    <button onclick="ambilLokasiKantor()">Ambil Lokasi Kantor</button>
-    <p id="lokasiMessage"></p>
-    <button onclick="alert('Menu Laporan')">Laporan</button>
-    <button onclick="logout()">Keluar</button>
-  </section>
+      <p id="tambahKaryawanMessage"></p>
+    </section>
 
-  <p id="adminMessage">Memuat dashboard...</p>
+    <section>
+      <h2>Lokasi Kantor</h2>
+      <p>Atur lokasi kantor untuk keperluan absensi GPS.</p>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <button onclick="ambilLokasiKantor()">
+        Simpan Lokasi Kantor
+      </button>
+
+      <p id="lokasiMessage"></p>
+    </section>
+
+    <section>
+      <h2>Data Karyawan</h2>
+
+      <button onclick="lihatDataKaryawan()">
+        Tampilkan Data Karyawan
+      </button>
+
+      <div id="dataKaryawanContainer"></div>
+    </section>
+
+    <section>
+      <h2>Data Absensi</h2>
+      <p>Fitur data absensi akan ditambahkan berikutnya.</p>
+    </section>
+
+    <section>
+      <h2>Laporan</h2>
+      <p>Fitur laporan akan ditambahkan berikutnya.</p>
+    </section>
+  </main>
+
   <script src="config.js"></script>
   <script src="admin.js"></script>
 
