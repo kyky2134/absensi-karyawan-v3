@@ -157,10 +157,7 @@ function escapeHTML(value) {
 async function lihatDataKaryawan() {
   const container = document.getElementById("dataKaryawanContainer");
 
-  if (!container) {
-    alert("Bagian Data Karyawan belum tersedia di admin.html");
-    return;
-  }
+  if (!container) return;
 
   container.innerHTML = "Memuat data karyawan...";
 
@@ -186,16 +183,13 @@ async function lihatDataKaryawan() {
     <div style="overflow-x:auto">
       <table border="1" cellpadding="10" cellspacing="0"
         style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nama</th>
-            <th>Nomor Paspor</th>
-            <th>Verifikasi</th>
-            <th>Tanggal Daftar</th>
-          </tr>
-        </thead>
-        <tbody>
+        <tr>
+          <th>No</th>
+          <th>Nama</th>
+          <th>Nomor Paspor</th>
+          <th>Verifikasi</th>
+          <th>Tanggal Daftar</th>
+        </tr>
   `;
 
   data.forEach((karyawan, index) => {
@@ -214,11 +208,122 @@ async function lihatDataKaryawan() {
     `;
   });
 
+  html += "</table></div>";
+  container.innerHTML = html;
+}
+
+// ==============================
+// DATA ABSENSI
+// ==============================
+
+async function lihatDataAbsensi() {
+  const container = document.getElementById("dataAbsensiContainer");
+
+  if (!container) return;
+
+  container.innerHTML = "Memuat data absensi...";
+
+  const { data, error } = await supabaseClient
+    .from("absensi")
+    .select(`
+      id,
+      user_id,
+      tanggal,
+      jam_masuk,
+      jam_pulang,
+      status,
+      latitude,
+      longitude
+    `)
+    .order("tanggal", { ascending: false });
+
+  if (error) {
+    container.textContent = "Gagal mengambil data: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>Belum ada data absensi.</p>";
+    return;
+  }
+
+  const userIds = [...new Set(data.map(item => item.user_id))];
+
+  const { data: profiles, error: profileError } = await supabaseClient
+    .from("profiles")
+    .select("id, nama")
+    .in("id", userIds);
+
+  if (profileError) {
+    container.textContent =
+      "Data absensi ditemukan, tetapi nama karyawan gagal dimuat: " +
+      profileError.message;
+    return;
+  }
+
+  const namaMap = {};
+  (profiles || []).forEach(profile => {
+    namaMap[profile.id] = profile.nama;
+  });
+
+  function formatWaktu(value) {
+    if (!value) return "-";
+
+    return new Date(value).toLocaleString("id-ID", {
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+  }
+
+  let html = `
+    <h2>Data Absensi</h2>
+    <p>Total catatan absensi: ${data.length}</p>
+
+    <div style="overflow-x:auto">
+      <table border="1" cellpadding="10" cellspacing="0"
+        style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Karyawan</th>
+            <th>Tanggal</th>
+            <th>Jam Masuk</th>
+            <th>Jam Pulang</th>
+            <th>Status</th>
+            <th>Lokasi GPS</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  data.forEach((item, index) => {
+    const tanggal = item.tanggal
+      ? new Date(item.tanggal).toLocaleDateString("id-ID")
+      : "-";
+
+    const lokasi =
+      item.latitude != null && item.longitude != null
+        ? `${escapeHTML(item.latitude)}, ${escapeHTML(item.longitude)}`
+        : "-";
+
+    html += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHTML(namaMap[item.user_id] || "Tidak diketahui")}</td>
+        <td>${escapeHTML(tanggal)}</td>
+        <td>${escapeHTML(formatWaktu(item.jam_masuk))}</td>
+        <td>${escapeHTML(formatWaktu(item.jam_pulang))}</td>
+        <td>${escapeHTML(item.status || "-")}</td>
+        <td>${lokasi}</td>
+      </tr>
+    `;
+  });
+
   html += `
         </tbody>
       </table>
     </div>
-    <button onclick="lihatDataKaryawan()">Muat Ulang</button>
+    <button onclick="lihatDataAbsensi()">Muat Ulang</button>
   `;
 
   container.innerHTML = html;
