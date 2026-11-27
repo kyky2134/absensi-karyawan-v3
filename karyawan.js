@@ -134,6 +134,7 @@ async function attendance(action) {
         } else {
           employeeMessage.textContent = data;
           await loadAttendance();
+          await lihatRiwayatAbsensi();
         }
       } catch (err) {
         employeeMessage.textContent = err.message;
@@ -163,7 +164,7 @@ checkInButton.addEventListener("click", () => attendance("masuk"));
 checkOutButton.addEventListener("click", () => attendance("pulang"));
 
 // ==============================
-// TAMPILKAN ABSENSI
+// TAMPILKAN ABSENSI HARI INI
 // ==============================
 
 async function loadAttendance() {
@@ -221,6 +222,91 @@ async function loadAttendance() {
     <p>Masuk: ${masuk}</p>
     <p>Pulang: ${pulang}</p>
     <p>Status: ${data.status || "-"}</p>
+  `;
+}
+
+// ==============================
+// RIWAYAT ABSENSI
+// ==============================
+
+async function lihatRiwayatAbsensi() {
+  const container =
+    document.getElementById("riwayatAbsensiContainer");
+
+  if (!currentUser) return;
+
+  container.textContent = "Memuat riwayat absensi...";
+
+  const { data, error } = await supabaseClient
+    .from("absensi")
+    .select("tanggal, jam_masuk, jam_pulang, status")
+    .eq("user_id", currentUser.id)
+    .order("tanggal", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    container.textContent =
+      "Gagal mengambil riwayat: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.textContent = "Belum ada riwayat absensi.";
+    return;
+  }
+
+  function formatTanggal(tanggal) {
+    if (!tanggal) return "-";
+
+    return new Date(tanggal + "T00:00:00").toLocaleDateString(
+      "id-ID",
+      {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Jakarta"
+      }
+    );
+  }
+
+  function formatJam(jam) {
+    if (!jam) return "-";
+
+    return new Date(jam).toLocaleTimeString("id-ID", {
+      timeZone: "Asia/Jakarta",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  const rows = data.map(item => `
+    <tr>
+      <td>${formatTanggal(item.tanggal)}</td>
+      <td>${formatJam(item.jam_masuk)}</td>
+      <td>${formatJam(item.jam_pulang)}</td>
+      <td>${item.status || "-"}</td>
+    </tr>
+  `).join("");
+
+  container.innerHTML = `
+    <p>Menampilkan maksimal 30 riwayat absensi terbaru.</p>
+
+    <div class="history-wrapper">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Jam Masuk</th>
+            <th>Jam Pulang</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
   `;
 }
 
@@ -478,5 +564,8 @@ async function logout() {
   window.location.href = "index.html";
 }
 
+// ==============================
 // JALANKAN APLIKASI
+// ==============================
+
 checkEmployee();
