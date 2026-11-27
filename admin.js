@@ -553,9 +553,15 @@ async function lihatLaporanAbsensi() {
   });
 
   const total = reportRows.length;
+
   const hadir = reportRows.filter(item =>
     String(item.status).toLowerCase() === "hadir"
   ).length;
+
+  const terlambat = reportRows.filter(item =>
+    String(item.status).toLowerCase() === "terlambat"
+  ).length;
+
   const belumPulang = reportRows.filter(item =>
     item.jam_masuk !== "-" && item.jam_pulang === "-"
   ).length;
@@ -566,7 +572,8 @@ async function lihatLaporanAbsensi() {
   summary.innerHTML = `
     <strong>Ringkasan Laporan</strong>
     <p>Total catatan absensi: ${total}</p>
-    <p>Total status hadir: ${hadir}</p>
+    <p>Tepat waktu: ${hadir}</p>
+    <p>Terlambat: ${terlambat}</p>
     <p>Belum absen pulang: ${belumPulang}</p>
   `;
 
@@ -816,6 +823,130 @@ async function muatGrafikAbsensi() {
   });
 
   message.textContent = "Grafik berhasil dimuat!";
+}
+
+// ==============================
+// REKAP KETERLAMBATAN
+// ==============================
+
+async function muatRekapKeterlambatan() {
+  const summary = document.getElementById("lateSummary");
+  const container = document.getElementById("lateReportContainer");
+
+  if (!summary || !container) return;
+
+  summary.textContent = "Memuat rekap keterlambatan...";
+  container.innerHTML = "";
+
+  try {
+    const { data: absensi, error: absensiError } =
+      await supabaseClient
+        .from("absensi")
+        .select("user_id, tanggal, jam_masuk, status")
+        .eq("status", "Terlambat")
+        .order("tanggal", { ascending: false });
+
+    if (absensiError) throw absensiError;
+
+    if (!absensi || absensi.length === 0) {
+      summary.textContent = "Belum ada karyawan yang terlambat.";
+      container.innerHTML = "<p>Data keterlambatan masih kosong.</p>";
+      return;
+    }
+
+    const userIds = [...new Set(absensi.map(item => item.user_id))];
+
+    const { data: profiles, error: profileError } =
+      await supabaseClient
+        .from("profiles")
+        .select("id, nama")
+        .in("id", userIds);
+
+    if (profileError) throw profileError;
+
+    const namaKaryawan = {};
+
+    (profiles || []).forEach(profile => {
+      namaKaryawan[profile.id] = profile.nama;
+    });
+
+    const jumlahTerlambat = {};
+
+    absensi.forEach(item => {
+      jumlahTerlambat[item.user_id] =
+        (jumlahTerlambat[item.user_id] || 0) + 1;
+    });
+
+    const jumlahKaryawan = Object.keys(jumlahTerlambat).length;
+
+    summary.innerHTML = `
+      <strong>Total keterlambatan:</strong> ${absensi.length} kali
+      <br>
+      <strong>Karyawan yang pernah terlambat:</strong> ${jumlahKaryawan} orang
+    `;
+
+    let html = `
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Karyawan</th>
+              <th>Tanggal</th>
+              <th>Jam Masuk</th>
+              <th>Status</th>
+              <th>Total Terlambat</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    absensi.forEach((item, index) => {
+      const nama = escapeHTML(
+        namaKaryawan[item.user_id] || "Nama tidak ditemukan"
+      );
+
+      const tanggal = escapeHTML(
+        item.tanggal ? formatTanggal(item.tanggal) : "-"
+      );
+
+      const jam = item.jam_masuk
+        ? new Date(item.jam_masuk).toLocaleTimeString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          })
+        : "-";
+
+      html += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${nama}</td>
+          <td>${tanggal}</td>
+          <td>${escapeHTML(jam)}</td>
+          <td><strong>Terlambat</strong></td>
+          <td>${jumlahTerlambat[item.user_id]} kali</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+  } catch (error) {
+    console.error("Gagal memuat rekap keterlambatan:", error);
+
+    summary.textContent = "Gagal mengambil rekap keterlambatan.";
+    container.innerHTML = `
+      <p>${escapeHTML(error.message || "Terjadi kesalahan.")}</p>
+    `;
+  }
 }
 
 // ==============================
