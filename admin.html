@@ -81,6 +81,14 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
+    .late-summary {
+      padding: 12px;
+      background: #fff1f2;
+      border-radius: 8px;
+      margin: 12px 0;
+      color: #991b1b;
+    }
   </style>
 </head>
 
@@ -138,6 +146,25 @@
       Lihat Verifikasi Wajah
     </button>
     <div id="faceVerificationContainer"></div>
+  </section>
+
+  <!-- REKAP KETERLAMBATAN -->
+  <section class="admin-section">
+    <h3>Rekap Keterlambatan Karyawan</h3>
+    <p>
+      Jam masuk kantor pukul 07.00 WIB.
+      Absensi setelah pukul 07.00 dihitung terlambat.
+    </p>
+
+    <button class="chart-button" onclick="muatRekapKeterlambatan()">
+      Muat Rekap Keterlambatan
+    </button>
+
+    <div id="lateSummary" class="late-summary">
+      Klik tombol untuk melihat rekap keterlambatan.
+    </div>
+
+    <div id="lateReportContainer"></div>
   </section>
 
   <!-- GRAFIK STATISTIK -->
