@@ -71,7 +71,10 @@
     .main {
       flex: 1;
       min-width: 0;
-      padding: 30px;
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 35px 55px;
     }
 
     .topbar {
@@ -114,7 +117,7 @@
 
     .section-card {
       background: white;
-      padding: 23px;
+      padding: 25px;
       border-radius: 15px;
       margin-bottom: 22px;
       box-shadow: 0 3px 15px rgba(20, 40, 80, 0.05);
@@ -280,6 +283,12 @@
       padding: 15px;
     }
 
+    @media (max-width: 1000px) {
+      .main {
+        padding: 25px 30px;
+      }
+    }
+
     @media (max-width: 800px) {
       .layout {
         display: block;
@@ -315,7 +324,10 @@
       }
 
       .main {
-        padding: 18px;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 20px;
       }
 
       .attendance-grid {
@@ -328,6 +340,20 @@
 
       .section-card {
         padding: 18px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main {
+        padding: 15px;
+      }
+
+      .topbar h1 {
+        font-size: 21px;
+      }
+
+      .welcome h2 {
+        font-size: 20px;
       }
     }
   </style>
@@ -372,7 +398,9 @@
 
     <section class="section-card" id="profil">
       <h3>Profil Karyawan</h3>
-      <p class="section-description">Periksa dan perbarui informasi profil kamu.</p>
+      <p class="section-description">
+        Periksa dan perbarui informasi profil kamu.
+      </p>
 
       <p id="employeeName">Memuat profil...</p>
 
