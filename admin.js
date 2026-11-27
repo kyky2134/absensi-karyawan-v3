@@ -1,4 +1,8 @@
 
+// ==============================
+// CEK ADMIN DAN LOGOUT
+// ==============================
+
 async function checkAdmin() {
   const message = document.getElementById("adminMessage");
 
@@ -34,7 +38,10 @@ async function logout() {
   window.location.href = "index.html";
 }
 
+// ==============================
 // LOKASI KANTOR
+// ==============================
+
 async function ambilLokasiKantor() {
   const message = document.getElementById("lokasiMessage");
 
@@ -75,7 +82,10 @@ async function ambilLokasiKantor() {
   );
 }
 
+// ==============================
 // DAFTARKAN KARYAWAN
+// ==============================
+
 const tambahForm = document.getElementById("tambahKaryawanForm");
 const tambahMessage = document.getElementById("tambahKaryawanMessage");
 
@@ -96,9 +106,7 @@ if (tambahForm) {
     try {
       const { data, error } = await supabaseClient.functions.invoke(
         "dynamic-function",
-        {
-          body: { nama, email }
-        }
+        { body: { nama, email } }
       );
 
       if (error) {
@@ -116,8 +124,7 @@ if (tambahForm) {
       }
 
       if (data?.error) {
-        tambahMessage.textContent =
-          "Gagal: " + (data.detail || data.error);
+        tambahMessage.textContent = "Gagal: " + (data.detail || data.error);
         return;
       }
 
@@ -126,13 +133,15 @@ if (tambahForm) {
 
       tambahForm.reset();
     } catch (err) {
-      tambahMessage.textContent =
-        "Terjadi kesalahan: " + err.message;
+      tambahMessage.textContent = "Terjadi kesalahan: " + err.message;
     }
   });
 }
 
+// ==============================
 // FUNGSI BANTUAN
+// ==============================
+
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, function(char) {
     return {
@@ -166,7 +175,10 @@ function formatTanggal(value) {
   });
 }
 
+// ==============================
 // DATA KARYAWAN
+// ==============================
+
 async function lihatDataKaryawan() {
   const container = document.getElementById("dataKaryawanContainer");
   if (!container) return;
@@ -196,11 +208,8 @@ async function lihatDataKaryawan() {
       <table border="1" cellpadding="10" cellspacing="0"
         style="width:100%;border-collapse:collapse;">
         <tr>
-          <th>No</th>
-          <th>Nama</th>
-          <th>Nomor Paspor</th>
-          <th>Verifikasi</th>
-          <th>Tanggal Daftar</th>
+          <th>No</th><th>Nama</th><th>Nomor Paspor</th>
+          <th>Verifikasi</th><th>Tanggal Daftar</th>
         </tr>
   `;
 
@@ -224,7 +233,10 @@ async function lihatDataKaryawan() {
   container.innerHTML = html;
 }
 
+// ==============================
 // DATA ABSENSI
+// ==============================
+
 async function lihatDataAbsensi() {
   const container = document.getElementById("dataAbsensiContainer");
   if (!container) return;
@@ -257,8 +269,7 @@ async function lihatDataAbsensi() {
     .in("id", userIds);
 
   if (profileError) {
-    container.textContent =
-      "Gagal memuat nama karyawan: " + profileError.message;
+    container.textContent = "Gagal memuat nama karyawan: " + profileError.message;
     return;
   }
 
@@ -275,13 +286,9 @@ async function lihatDataAbsensi() {
         style="width:100%;border-collapse:collapse;">
         <thead>
           <tr>
-            <th>No</th>
-            <th>Nama Karyawan</th>
-            <th>Tanggal</th>
-            <th>Jam Masuk</th>
-            <th>Jam Pulang</th>
-            <th>Status</th>
-            <th>Lokasi GPS</th>
+            <th>No</th><th>Nama Karyawan</th><th>Tanggal</th>
+            <th>Jam Masuk</th><th>Jam Pulang</th>
+            <th>Status</th><th>Lokasi GPS</th>
           </tr>
         </thead>
         <tbody>
@@ -316,7 +323,10 @@ async function lihatDataAbsensi() {
   container.innerHTML = html;
 }
 
+// ==============================
 // VERIFIKASI WAJAH
+// ==============================
+
 async function lihatVerifikasiWajah() {
   const container = document.getElementById("faceVerificationContainer");
   if (!container) return;
@@ -388,8 +398,7 @@ async function lihatVerifikasiWajah() {
       const photo = document.createElement("img");
       photo.src = signedData.signedUrl;
       photo.alt = "Foto verifikasi karyawan";
-      photo.style.cssText =
-        "width:100%;max-width:300px;border-radius:10px;";
+      photo.style.cssText = "width:100%;max-width:300px;border-radius:10px;";
       card.appendChild(photo);
     }
 
@@ -453,7 +462,10 @@ async function prosesVerifikasi(id, status, catatan) {
   await lihatDataKaryawan();
 }
 
+// ==============================
 // LAPORAN ABSENSI
+// ==============================
+
 let reportRows = [];
 
 async function lihatLaporanAbsensi() {
@@ -505,8 +517,7 @@ async function lihatLaporanAbsensi() {
     .in("id", userIds);
 
   if (profileError) {
-    container.textContent =
-      "Gagal mengambil data karyawan: " + profileError.message;
+    container.textContent = "Gagal mengambil data karyawan: " + profileError.message;
     reportRows = [];
     return;
   }
@@ -595,7 +606,10 @@ async function lihatLaporanAbsensi() {
   container.innerHTML = html;
 }
 
+// ==============================
 // DOWNLOAD CSV
+// ==============================
+
 function downloadLaporanAbsensi() {
   if (!reportRows.length) {
     alert("Tampilkan laporan terlebih dahulu sebelum mengunduh.");
@@ -652,5 +666,160 @@ function downloadLaporanAbsensi() {
   URL.revokeObjectURL(url);
 }
 
+// ==============================
+// GRAFIK STATISTIK ABSENSI
+// ==============================
+
+let dailyChart = null;
+let monthlyChart = null;
+
+async function muatGrafikAbsensi() {
+  const message = document.getElementById("chartMessage");
+
+  if (!message) return;
+
+  message.textContent = "Sedang memuat grafik...";
+
+  if (typeof Chart === "undefined") {
+    message.textContent =
+      "Chart.js gagal dimuat. Periksa koneksi internet.";
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("absensi")
+    .select("tanggal, status")
+    .order("tanggal", { ascending: true });
+
+  if (error) {
+    message.textContent = "Gagal mengambil data: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    message.textContent =
+      "Belum ada data absensi untuk dibuat grafik.";
+    return;
+  }
+
+  // GRAFIK HARIAN
+  const dailyMap = {};
+
+  data.forEach(item => {
+    if (!item.tanggal) return;
+
+    dailyMap[item.tanggal] = (dailyMap[item.tanggal] || 0) + 1;
+  });
+
+  const dailyDates = Object.keys(dailyMap)
+    .sort()
+    .slice(-7);
+
+  const dailyLabels = dailyDates.map(formatTanggal);
+  const dailyValues = dailyDates.map(date => dailyMap[date]);
+
+  const dailyCanvas =
+    document.getElementById("dailyAttendanceChart");
+
+  if (!dailyCanvas) {
+    message.textContent = "Elemen grafik harian tidak ditemukan.";
+    return;
+  }
+
+  if (dailyChart) dailyChart.destroy();
+
+  dailyChart = new Chart(dailyCanvas, {
+    type: "bar",
+    data: {
+      labels: dailyLabels,
+      datasets: [{
+        label: "Jumlah Catatan Absensi",
+        data: dailyValues,
+        backgroundColor: "#2563eb",
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+
+  // GRAFIK BULANAN
+  const monthlyMap = {};
+
+  data.forEach(item => {
+    if (!item.tanggal) return;
+
+    const bulan = item.tanggal.substring(0, 7);
+    monthlyMap[bulan] = (monthlyMap[bulan] || 0) + 1;
+  });
+
+  const monthKeys = Object.keys(monthlyMap)
+    .sort()
+    .slice(-12);
+
+  const monthLabels = monthKeys.map(bulan => {
+    const [tahun, angkaBulan] = bulan.split("-");
+
+    return new Date(
+      Number(tahun),
+      Number(angkaBulan) - 1,
+      1
+    ).toLocaleDateString("id-ID", {
+      month: "long",
+      year: "numeric"
+    });
+  });
+
+  const monthValues = monthKeys.map(bulan => monthlyMap[bulan]);
+
+  const monthlyCanvas =
+    document.getElementById("monthlyAttendanceChart");
+
+  if (!monthlyCanvas) {
+    message.textContent = "Elemen grafik bulanan tidak ditemukan.";
+    return;
+  }
+
+  if (monthlyChart) monthlyChart.destroy();
+
+  monthlyChart = new Chart(monthlyCanvas, {
+    type: "line",
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: "Jumlah Catatan Absensi",
+        data: monthValues,
+        borderColor: "#16a34a",
+        backgroundColor: "rgba(22,163,74,0.15)",
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+
+  message.textContent = "Grafik berhasil dimuat!";
+}
+
+// ==============================
 // JALANKAN ADMIN
+// ==============================
+
 checkAdmin();
