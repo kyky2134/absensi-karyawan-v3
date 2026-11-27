@@ -2,8 +2,10 @@
 async function checkAdmin() {
   const message = document.getElementById("adminMessage");
 
-  const { data: { user }, error: authError } =
-    await supabaseClient.auth.getUser();
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
 
   if (authError || !user) {
     window.location.href = "index.html";
@@ -33,6 +35,10 @@ async function logout() {
 checkAdmin();
 
 
+// ==============================
+// LOKASI KANTOR
+// ==============================
+
 async function ambilLokasiKantor() {
   const message = document.getElementById("lokasiMessage");
 
@@ -58,7 +64,8 @@ async function ambilLokasiKantor() {
       );
 
       if (error) {
-        message.textContent = "Gagal menyimpan: " + error.message;
+        message.textContent =
+          "Gagal menyimpan lokasi: " + error.message;
         return;
       }
 
@@ -66,8 +73,7 @@ async function ambilLokasiKantor() {
         "Lokasi kantor berhasil disimpan. Radius 100 meter.";
     },
     (error) => {
-      message.textContent =
-        "GPS gagal: " + error.message;
+      message.textContent = "GPS gagal: " + error.message;
     },
     {
       enableHighAccuracy: true,
@@ -77,30 +83,80 @@ async function ambilLokasiKantor() {
   );
 }
 
+
+// ==============================
+// DAFTARKAN KARYAWAN BARU
+// ==============================
+
 const tambahForm = document.getElementById("tambahKaryawanForm");
 const tambahMessage = document.getElementById("tambahKaryawanMessage");
 
-tambahForm.addEventListener("submit", async function(e) {
-  e.preventDefault();
+if (tambahForm) {
+  tambahForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-  const nama = document.getElementById("namaKaryawan").value.trim();
-  const email = document.getElementById("emailKaryawan").value.trim();
+    const nama = document
+      .getElementById("namaKaryawan")
+      .value.trim();
 
-  tambahMessage.textContent = "Sedang mendaftarkan...";
+    const email = document
+      .getElementById("emailKaryawan")
+      .value.trim();
 
-  const { data, error } = await supabaseClient.functions.invoke(
-    "dynamic-function",
-    {
-      body: { nama, email }
+    if (!nama || !email) {
+      tambahMessage.textContent = "Nama dan email wajib diisi.";
+      return;
     }
-  );
 
-  if (error || data?.error) {
-    tambahMessage.textContent =
-      "Gagal: " + (data?.error || error.message);
-    return;
-  }
+    tambahMessage.textContent = "Sedang mendaftarkan...";
 
-  tambahMessage.textContent = "Undangan berhasil dikirim ke email karyawan!";
-  tambahForm.reset();
-});
+    try {
+      const { data, error } =
+        await supabaseClient.functions.invoke(
+          "dynamic-function",
+          {
+            body: {
+              nama: nama,
+              email: email
+            }
+          }
+        );
+
+      if (error) {
+        let detail = error.message;
+
+        if (error.context) {
+          try {
+            const response = await error.context.clone().json();
+
+            detail =
+              response.detail ||
+              response.error ||
+              response.message ||
+              detail;
+          } catch (_) {
+            // Gunakan pesan error awal jika respons bukan JSON.
+          }
+        }
+
+        tambahMessage.textContent = "Gagal: " + detail;
+        return;
+      }
+
+      if (data?.error) {
+        tambahMessage.textContent =
+          "Gagal: " + (data.detail || data.error);
+        return;
+      }
+
+      tambahMessage.textContent =
+        "Undangan berhasil dikirim ke email karyawan!";
+
+      tambahForm.reset();
+
+    } catch (err) {
+      tambahMessage.textContent =
+        "Terjadi kesalahan: " + err.message;
+    }
+  });
+}
