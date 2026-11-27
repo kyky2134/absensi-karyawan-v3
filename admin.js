@@ -139,7 +139,7 @@ if (tambahForm) {
 }
 
 // ==============================
-// DATA KARYAWAN
+// FUNGSI BANTUAN
 // ==============================
 
 function escapeHTML(value) {
@@ -153,6 +153,10 @@ function escapeHTML(value) {
     }[char];
   });
 }
+
+// ==============================
+// DATA KARYAWAN
+// ==============================
 
 async function lihatDataKaryawan() {
   const container = document.getElementById("dataKaryawanContainer");
@@ -182,7 +186,7 @@ async function lihatDataKaryawan() {
     <p>Total karyawan: ${data.length}</p>
     <div style="overflow-x:auto">
       <table border="1" cellpadding="10" cellspacing="0"
-        style="width:100%; border-collapse:collapse;">
+        style="width:100%;border-collapse:collapse;">
         <tr>
           <th>No</th>
           <th>Nama</th>
@@ -256,12 +260,12 @@ async function lihatDataAbsensi() {
 
   if (profileError) {
     container.textContent =
-      "Data absensi ditemukan, tetapi nama karyawan gagal dimuat: " +
-      profileError.message;
+      "Gagal memuat nama karyawan: " + profileError.message;
     return;
   }
 
   const namaMap = {};
+
   (profiles || []).forEach(profile => {
     namaMap[profile.id] = profile.nama;
   });
@@ -271,17 +275,17 @@ async function lihatDataAbsensi() {
 
     return new Date(value).toLocaleString("id-ID", {
       dateStyle: "short",
-      timeStyle: "short"
+      timeStyle: "short",
+      timeZone: "Asia/Jakarta"
     });
   }
 
   let html = `
     <h2>Data Absensi</h2>
     <p>Total catatan absensi: ${data.length}</p>
-
     <div style="overflow-x:auto">
       <table border="1" cellpadding="10" cellspacing="0"
-        style="width:100%; border-collapse:collapse;">
+        style="width:100%;border-collapse:collapse;">
         <thead>
           <tr>
             <th>No</th>
@@ -298,7 +302,7 @@ async function lihatDataAbsensi() {
 
   data.forEach((item, index) => {
     const tanggal = item.tanggal
-      ? new Date(item.tanggal).toLocaleDateString("id-ID")
+      ? new Date(item.tanggal + "T00:00:00").toLocaleDateString("id-ID")
       : "-";
 
     const lokasi =
@@ -327,6 +331,153 @@ async function lihatDataAbsensi() {
   `;
 
   container.innerHTML = html;
+}
+
+// ==============================
+// VERIFIKASI WAJAH KARYAWAN
+// ==============================
+
+async function lihatVerifikasiWajah() {
+  const container = document.getElementById("faceVerificationContainer");
+
+  if (!container) return;
+
+  container.innerHTML = "Memuat pengajuan verifikasi...";
+
+  const { data, error } = await supabaseClient
+    .from("verifikasi_wajah")
+    .select("id, user_id, storage_path, status, catatan, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    container.textContent = "Gagal memuat verifikasi: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>Belum ada pengajuan verifikasi.</p>";
+    return;
+  }
+
+  const userIds = [...new Set(data.map(item => item.user_id))];
+
+  const { data: profiles, error: profileError } = await supabaseClient
+    .from("profiles")
+    .select("id, nama")
+    .in("id", userIds);
+
+  if (profileError) {
+    container.textContent = "Gagal memuat nama: " + profileError.message;
+    return;
+  }
+
+  const namaMap = {};
+
+  (profiles || []).forEach(profile => {
+    namaMap[profile.id] = profile.nama;
+  });
+
+  container.innerHTML = "<h2>Daftar Verifikasi Wajah</h2>";
+
+  for (const item of data) {
+    const { data: signedData, error: signedError } =
+      await supabaseClient.storage
+        .from("verifikasi-wajah")
+        .createSignedUrl(item.storage_path, 300);
+
+    const card = document.createElement("div");
+
+    card.style.cssText =
+      "border:1px solid #ccc;padding:15px;margin:12px 0;border-radius:10px;";
+
+    const title = document.createElement("h3");
+    title.textContent = namaMap[item.user_id] || "Karyawan";
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + item.status;
+
+    const date = document.createElement("p");
+    date.textContent = item.created_at
+      ? "Tanggal: " + new Date(item.created_at).toLocaleString("id-ID")
+      : "";
+
+    card.append(title, status, date);
+
+    if (signedError) {
+      const errorText = document.createElement("p");
+      errorText.textContent = "Foto gagal dimuat: " + signedError.message;
+      card.appendChild(errorText);
+    } else {
+      const photo = document.createElement("img");
+      photo.src = signedData.signedUrl;
+      photo.alt = "Foto verifikasi karyawan";
+      photo.style.cssText =
+        "width:100%;max-width:300px;border-radius:10px;";
+      card.appendChild(photo);
+    }
+
+    if (item.status === "menunggu") {
+      const note = document.createElement("textarea");
+      note.placeholder = "Catatan Admin (opsional)";
+      note.style.cssText = "display:block;width:100%;margin:10px 0;padding:8px;";
+
+      const approve = document.createElement("button");
+      approve.textContent = "Setujui";
+
+      approve.addEventListener("click", () => {
+        prosesVerifikasi(item.id, "disetujui", note.value);
+      });
+
+      const reject = document.createElement("button");
+      reject.textContent = "Tolak";
+      reject.style.marginLeft = "8px";
+
+      reject.addEventListener("click", () => {
+        if (!note.value.trim()) {
+          alert("Isi alasan penolakan terlebih dahulu.");
+          return;
+        }
+
+        prosesVerifikasi(item.id, "ditolak", note.value);
+      });
+
+      card.append(note, approve, reject);
+    }
+
+    container.appendChild(card);
+  }
+
+  const reload = document.createElement("button");
+  reload.textContent = "Muat Ulang Verifikasi";
+  reload.addEventListener("click", lihatVerifikasiWajah);
+  container.appendChild(reload);
+}
+
+async function prosesVerifikasi(id, status, catatan) {
+  const konfirmasi = status === "disetujui"
+    ? "Setujui verifikasi karyawan ini?"
+    : "Tolak verifikasi karyawan ini?";
+
+  if (!confirm(konfirmasi)) return;
+
+  const { data, error } = await supabaseClient.rpc(
+    "review_face_verification",
+    {
+      p_id: id,
+      p_status: status,
+      p_catatan: catatan.trim() || null
+    }
+  );
+
+  if (error) {
+    alert("Gagal memproses: " + error.message);
+    return;
+  }
+
+  alert(data || "Verifikasi berhasil diperbarui.");
+
+  await lihatVerifikasiWajah();
+  await lihatDataKaryawan();
 }
 
 checkAdmin();
