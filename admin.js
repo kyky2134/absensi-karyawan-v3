@@ -24,16 +24,15 @@ async function checkAdmin() {
     return;
   }
 
-  message.textContent = "Selamat datang, " + profile.nama;
+  if (message) {
+    message.textContent = "Selamat datang, " + profile.nama;
+  }
 }
 
 async function logout() {
   await supabaseClient.auth.signOut();
   window.location.href = "index.html";
 }
-
-checkAdmin();
-
 
 // ==============================
 // LOKASI KANTOR
@@ -51,21 +50,17 @@ async function ambilLokasiKantor() {
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-
       const { error } = await supabaseClient.rpc(
         "set_office_location",
         {
-          p_latitude: latitude,
-          p_longitude: longitude,
+          p_latitude: position.coords.latitude,
+          p_longitude: position.coords.longitude,
           p_radius: 100
         }
       );
 
       if (error) {
-        message.textContent =
-          "Gagal menyimpan lokasi: " + error.message;
+        message.textContent = "Gagal menyimpan lokasi: " + error.message;
         return;
       }
 
@@ -83,7 +78,6 @@ async function ambilLokasiKantor() {
   );
 }
 
-
 // ==============================
 // DAFTARKAN KARYAWAN BARU
 // ==============================
@@ -95,13 +89,8 @@ if (tambahForm) {
   tambahForm.addEventListener("submit", async function(e) {
     e.preventDefault();
 
-    const nama = document
-      .getElementById("namaKaryawan")
-      .value.trim();
-
-    const email = document
-      .getElementById("emailKaryawan")
-      .value.trim();
+    const nama = document.getElementById("namaKaryawan").value.trim();
+    const email = document.getElementById("emailKaryawan").value.trim();
 
     if (!nama || !email) {
       tambahMessage.textContent = "Nama dan email wajib diisi.";
@@ -111,16 +100,12 @@ if (tambahForm) {
     tambahMessage.textContent = "Sedang mendaftarkan...";
 
     try {
-      const { data, error } =
-        await supabaseClient.functions.invoke(
-          "dynamic-function",
-          {
-            body: {
-              nama: nama,
-              email: email
-            }
-          }
-        );
+      const { data, error } = await supabaseClient.functions.invoke(
+        "dynamic-function",
+        {
+          body: { nama, email }
+        }
+      );
 
       if (error) {
         let detail = error.message;
@@ -128,15 +113,8 @@ if (tambahForm) {
         if (error.context) {
           try {
             const response = await error.context.clone().json();
-
-            detail =
-              response.detail ||
-              response.error ||
-              response.message ||
-              detail;
-          } catch (_) {
-            // Gunakan pesan error awal jika respons bukan JSON.
-          }
+            detail = response.detail || response.error || response.message || detail;
+          } catch (_) {}
         }
 
         tambahMessage.textContent = "Gagal: " + detail;
@@ -153,10 +131,97 @@ if (tambahForm) {
         "Undangan berhasil dikirim ke email karyawan!";
 
       tambahForm.reset();
-
     } catch (err) {
       tambahMessage.textContent =
         "Terjadi kesalahan: " + err.message;
     }
   });
 }
+
+// ==============================
+// DATA KARYAWAN
+// ==============================
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, function(char) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[char];
+  });
+}
+
+async function lihatDataKaryawan() {
+  const container = document.getElementById("dataKaryawanContainer");
+
+  if (!container) {
+    alert("Bagian Data Karyawan belum tersedia di admin.html");
+    return;
+  }
+
+  container.innerHTML = "Memuat data karyawan...";
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, nama, nomor_paspor, role, status_verifikasi, created_at")
+    .eq("role", "karyawan")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    container.textContent = "Gagal mengambil data: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>Belum ada data karyawan.</p>";
+    return;
+  }
+
+  let html = `
+    <h2>Data Karyawan</h2>
+    <p>Total karyawan: ${data.length}</p>
+    <div style="overflow-x:auto">
+      <table border="1" cellpadding="10" cellspacing="0"
+        style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Nomor Paspor</th>
+            <th>Verifikasi</th>
+            <th>Tanggal Daftar</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  data.forEach((karyawan, index) => {
+    const tanggal = karyawan.created_at
+      ? new Date(karyawan.created_at).toLocaleDateString("id-ID")
+      : "-";
+
+    html += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHTML(karyawan.nama)}</td>
+        <td>${escapeHTML(karyawan.nomor_paspor)}</td>
+        <td>${karyawan.status_verifikasi ? "Terverifikasi" : "Belum diverifikasi"}</td>
+        <td>${escapeHTML(tanggal)}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+    <button onclick="lihatDataKaryawan()">Muat Ulang</button>
+  `;
+
+  container.innerHTML = html;
+}
+
+checkAdmin();
