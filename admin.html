@@ -22,6 +22,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      min-width: 650px;
     }
 
     th, td {
@@ -30,8 +31,32 @@
       text-align: left;
     }
 
+    th {
+      background: #f2f2f2;
+    }
+
     .table-wrapper {
       overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    .report-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .report-filter input {
+      padding: 10px;
+      max-width: 100%;
+    }
+
+    .report-summary {
+      padding: 12px;
+      background: #f2f2f2;
+      border-radius: 8px;
+      margin: 12px 0;
     }
   </style>
 </head>
@@ -113,9 +138,51 @@
     <div id="faceVerificationContainer"></div>
   </section>
 
+  <!-- LAPORAN ABSENSI -->
   <section class="admin-section">
-    <h3>Laporan</h3>
-    <p>Fitur laporan akan dikembangkan selanjutnya.</p>
+
+    <h3>Laporan Absensi</h3>
+
+    <p>
+      Lihat dan unduh laporan kehadiran seluruh karyawan.
+    </p>
+
+    <div class="report-filter">
+
+      <div>
+        <label for="reportStartDate">Tanggal Mulai</label>
+        <br>
+        <input type="date" id="reportStartDate">
+      </div>
+
+      <div>
+        <label for="reportEndDate">Tanggal Akhir</label>
+        <br>
+        <input type="date" id="reportEndDate">
+      </div>
+
+    </div>
+
+    <button
+      type="button"
+      onclick="lihatLaporanAbsensi()"
+    >
+      Tampilkan Laporan
+    </button>
+
+    <button
+      type="button"
+      onclick="downloadLaporanAbsensi()"
+    >
+      Download CSV
+    </button>
+
+    <div id="reportSummary" class="report-summary">
+      Belum ada laporan yang ditampilkan.
+    </div>
+
+    <div id="reportContainer"></div>
+
   </section>
 
   <button onclick="logout()">Keluar</button>
