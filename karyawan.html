@@ -6,7 +6,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AttendPro - Karyawan</title>
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    video {
+      width: 100%;
+      max-width: 350px;
+      border-radius: 12px;
+      background: #222;
+    }
+
+    #faceCanvas {
+      display: none;
+    }
+
+    .face-section {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    .face-section button {
+      margin: 5px 0;
+    }
+  </style>
 </head>
+
 <body>
 
   <h1>AttendPro</h1>
@@ -15,11 +40,13 @@
   <h2>Dashboard Karyawan</h2>
 
   <section>
+
     <h3>Profil Karyawan</h3>
 
     <p id="employeeName">Memuat profil...</p>
 
     <form id="profileForm">
+
       <input
         type="text"
         id="nama"
@@ -35,18 +62,92 @@
       >
 
       <button type="submit">Simpan Profil</button>
+
     </form>
 
-    <h3>Verifikasi Wajah</h3>
-    <p id="faceMessage">
-      Fitur verifikasi wajah akan disiapkan pada tahap berikutnya.
-    </p>
+    <div class="face-section">
+
+      <h3>Verifikasi Wajah</h3>
+
+      <p id="faceMessage">
+        Silakan lakukan verifikasi wajah.
+      </p>
+
+      <p id="faceStatus">
+        Status: Memuat...
+      </p>
+
+      <label>
+        <input type="checkbox" id="faceConsent">
+        Saya menyetujui pengambilan dan pemeriksaan
+        foto untuk verifikasi karyawan.
+      </label>
+
+      <br><br>
+
+      <video
+        id="faceCamera"
+        autoplay
+        playsinline
+        style="display:none;"
+      ></video>
+
+      <canvas id="faceCanvas"></canvas>
+
+      <br>
+
+      <img
+        id="facePreview"
+        alt="Pratinjau foto verifikasi"
+        style="display:none;width:100%;max-width:350px;border-radius:12px;"
+      >
+
+      <br>
+
+      <button type="button" id="startCameraButton">
+        Buka Kamera
+      </button>
+
+      <button
+        type="button"
+        id="captureFaceButton"
+        disabled
+      >
+        Ambil Foto
+      </button>
+
+      <button
+        type="button"
+        id="submitFaceButton"
+        disabled
+      >
+        Kirim Verifikasi
+      </button>
+
+      <button
+        type="button"
+        id="stopCameraButton"
+        disabled
+      >
+        Matikan Kamera
+      </button>
+
+    </div>
 
     <h3>Absensi</h3>
-    <button id="checkInButton" disabled>Absen Masuk</button>
-    <button id="checkOutButton" disabled>Absen Pulang</button>
 
-    <button onclick="logout()">Keluar</button>
+    <button id="checkInButton" disabled>
+      Absen Masuk
+    </button>
+
+    <button id="checkOutButton" disabled>
+      Absen Pulang
+    </button>
+
+    <button onclick="logout()">
+      Keluar
+    </button>
+
   </section>
 
   <p id="employeeMessage"></p>
