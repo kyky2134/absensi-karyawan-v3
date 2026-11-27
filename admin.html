@@ -18,6 +18,19 @@
 
   <section>
     <h3>Menu Administrator</h3>
+    <h3>Daftarkan Karyawan Baru</h3>
+
+<form id="tambahKaryawanForm">
+  <input type="text" id="namaKaryawan"
+    placeholder="Nama lengkap karyawan" required>
+
+  <input type="email" id="emailKaryawan"
+    placeholder="Email karyawan" required>
+
+  <button type="submit">Daftarkan Karyawan</button>
+</form>
+
+<p id="tambahKaryawanMessage"></p>
     <button onclick="alert('Menu Data Karyawan')">Data Karyawan</button>
     <button onclick="alert('Menu Data Absensi')">Data Absensi</button>
     <button onclick="ambilLokasiKantor()">Ambil Lokasi Kantor</button>
