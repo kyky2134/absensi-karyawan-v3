@@ -4,90 +4,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - AttendPro</title>
+  <title>AttendPro - Admin</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .admin-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    .admin-section button {
+      margin: 5px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+  </style>
 </head>
 
-<body class="admin-page">
+<body>
 
-  <header>
-    <h1>AttendPro</h1>
-    <p id="adminMessage">Memuat dashboard...</p>
-    <button onclick="logout()">Logout</button>
-  </header>
+  <h1>AttendPro</h1>
+  <p>Admin Dashboard</p>
 
-  <main>
+  <h2>Dashboard Administrator</h2>
+  <p id="adminMessage">Memeriksa akun Admin...</p>
 
-    <section>
-      <h2>Dashboard Admin</h2>
-      <p>Selamat datang di halaman administrator AttendPro.</p>
-    </section>
+  <section class="admin-section">
+    <h3>Daftarkan Karyawan Baru</h3>
 
-    <section>
-      <h2>Daftarkan Karyawan Baru</h2>
+    <form id="tambahKaryawanForm">
+      <input
+        type="text"
+        id="namaKaryawan"
+        placeholder="Nama lengkap karyawan"
+        required
+      >
 
-      <form id="tambahKaryawanForm">
-        <label for="namaKaryawan">Nama Karyawan</label>
-        <input
-          type="text"
-          id="namaKaryawan"
-          placeholder="Masukkan nama karyawan"
-          required
-        >
+      <input
+        type="email"
+        id="emailKaryawan"
+        placeholder="Email karyawan"
+        required
+      >
 
-        <label for="emailKaryawan">Email Karyawan</label>
-        <input
-          type="email"
-          id="emailKaryawan"
-          placeholder="Masukkan email karyawan"
-          required
-        >
+      <button type="submit">Kirim Undangan</button>
+    </form>
 
-        <button type="submit">Daftarkan Karyawan</button>
-      </form>
+    <p id="tambahKaryawanMessage"></p>
+  </section>
 
-      <p id="tambahKaryawanMessage"></p>
-    </section>
+  <section class="admin-section">
+    <h3>Lokasi Kantor</h3>
 
-    <section>
-      <h2>Lokasi Kantor</h2>
-      <p>Atur lokasi kantor untuk keperluan absensi GPS.</p>
+    <button onclick="ambilLokasiKantor()">
+      Simpan Lokasi Kantor dari GPS
+    </button>
 
-      <button onclick="ambilLokasiKantor()">
-        Simpan Lokasi Kantor
-      </button>
+    <p id="lokasiMessage"></p>
+  </section>
 
-      <p id="lokasiMessage"></p>
-    </section>
+  <section class="admin-section">
+    <h3>Data Karyawan</h3>
 
-    <section>
-      <h2>Data Karyawan</h2>
+    <button onclick="lihatDataKaryawan()">
+      Lihat Data Karyawan
+    </button>
 
-      <button onclick="lihatDataKaryawan()">
-        Tampilkan Data Karyawan
-      </button>
+    <div id="dataKaryawanContainer"></div>
+  </section>
 
-      <div id="dataKaryawanContainer"></div>
-    </section>
+  <section class="admin-section">
+    <h3>Data Absensi</h3>
 
-    <section>
-      <h2>Data Absensi</h2>
+    <button onclick="lihatDataAbsensi()">
+      Lihat Data Absensi
+    </button>
 
-      <button onclick="lihatDataAbsensi()">
-        Tampilkan Data Absensi
-      </button>
+    <div id="dataAbsensiContainer"></div>
+  </section>
 
-      <div id="dataAbsensiContainer"></div>
-    </section>
+  <section class="admin-section">
+    <h3>Verifikasi Wajah Karyawan</h3>
 
-    <section>
-      <h2>Laporan</h2>
-      <p>Fitur laporan akan ditambahkan berikutnya.</p>
-    </section>
+    <p>
+      Periksa foto yang dikirim karyawan secara manual.
+      Pilih Setujui atau Tolak setelah pemeriksaan.
+    </p>
 
-  </main>
+    <button onclick="lihatVerifikasiWajah()">
+      Lihat Verifikasi Wajah
+    </button>
 
+    <div id="faceVerificationContainer"></div>
+  </section>
+
+  <section class="admin-section">
+    <h3>Laporan</h3>
+    <p>Fitur laporan akan dikembangkan selanjutnya.</p>
+  </section>
+
+  <button onclick="logout()">Keluar</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="admin.js"></script>
 
