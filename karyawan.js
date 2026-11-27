@@ -22,6 +22,10 @@ let currentUser = null;
 let cameraStream = null;
 let capturedPhoto = null;
 
+// ==============================
+// CEK AKUN KARYAWAN
+// ==============================
+
 async function checkEmployee() {
   const { data: { user }, error: authError } =
     await supabaseClient.auth.getUser();
@@ -60,6 +64,10 @@ async function checkEmployee() {
   await loadFaceStatus();
 }
 
+// ==============================
+// SIMPAN PROFIL
+// ==============================
+
 profileForm.addEventListener("submit", async function(e) {
   e.preventDefault();
 
@@ -85,11 +93,14 @@ profileForm.addEventListener("submit", async function(e) {
   }
 
   employeeMessage.textContent = "Profil berhasil disimpan!";
+
   document.getElementById("employeeName").textContent =
     "Selamat datang, " + nama;
 });
 
+// ==============================
 // ABSENSI GPS
+// ==============================
 
 async function attendance(action) {
   if (!currentUser) return;
@@ -99,7 +110,8 @@ async function attendance(action) {
   checkOutButton.disabled = true;
 
   if (!navigator.geolocation) {
-    employeeMessage.textContent = "Browser tidak mendukung GPS.";
+    employeeMessage.textContent =
+      "Browser tidak mendukung GPS.";
     enableButtons();
     return;
   }
@@ -117,7 +129,8 @@ async function attendance(action) {
         );
 
         if (error) {
-          employeeMessage.textContent = "Gagal: " + error.message;
+          employeeMessage.textContent =
+            "Gagal: " + error.message;
         } else {
           employeeMessage.textContent = data;
           await loadAttendance();
@@ -149,6 +162,10 @@ function enableButtons() {
 checkInButton.addEventListener("click", () => attendance("masuk"));
 checkOutButton.addEventListener("click", () => attendance("pulang"));
 
+// ==============================
+// TAMPILKAN ABSENSI
+// ==============================
+
 async function loadAttendance() {
   if (!currentUser) return;
 
@@ -172,12 +189,14 @@ async function loadAttendance() {
   }
 
   if (error) {
-    container.textContent = "Gagal memuat absensi: " + error.message;
+    container.textContent =
+      "Gagal memuat absensi: " + error.message;
     return;
   }
 
   if (!data) {
-    container.textContent = "Status hari ini: Belum absen";
+    container.textContent =
+      "Status hari ini: Belum absen";
     return;
   }
 
@@ -205,9 +224,18 @@ async function loadAttendance() {
   `;
 }
 
-// VERIFIKASI WAJAH
+// ==============================
+// NOTIFIKASI VERIFIKASI WAJAH
+// ==============================
 
 async function loadFaceStatus() {
+  faceStatus.style.padding = "12px";
+  faceStatus.style.borderRadius = "10px";
+  faceStatus.style.border = "1px solid #ddd";
+
+  faceStatus.textContent =
+    "Memeriksa status verifikasi...";
+
   const { data, error } = await supabaseClient
     .from("verifikasi_wajah")
     .select("status, catatan, created_at")
@@ -217,15 +245,57 @@ async function loadFaceStatus() {
     .maybeSingle();
 
   if (error) {
-    faceStatus.textContent = "Gagal memuat status: " + error.message;
+    faceStatus.textContent =
+      "Gagal memuat status: " + error.message;
+    faceStatus.style.background = "#fff3cd";
     return;
   }
 
-  faceStatus.textContent = data
-    ? "Status: " + data.status +
-      (data.catatan ? " - " + data.catatan : "")
-    : "Status: Belum melakukan verifikasi";
+  if (!data) {
+    faceStatus.textContent =
+      "BELUM VERIFIKASI\nSilakan kirim foto untuk diperiksa Admin.";
+
+    faceStatus.style.background = "#fff3cd";
+
+    faceMessage.textContent =
+      "Kamu belum mengirim foto verifikasi.";
+    return;
+  }
+
+  if (data.status === "disetujui") {
+    faceStatus.textContent =
+      "VERIFIKASI DISETUJUI\nAkun kamu sudah disetujui Admin. Kamu bisa melakukan absensi.";
+
+    faceStatus.style.background = "#d4edda";
+
+    faceMessage.textContent =
+      "Verifikasi berhasil!";
+  } else if (data.status === "ditolak") {
+    faceStatus.textContent =
+      "VERIFIKASI DITOLAK\nAlasan: " +
+      (data.catatan ||
+        "Silakan hubungi Admin untuk informasi lebih lanjut.");
+
+    faceStatus.style.background = "#f8d7da";
+
+    faceMessage.textContent =
+      "Pengajuan ditolak. Silakan periksa alasan penolakan.";
+  } else {
+    faceStatus.textContent =
+      "MENUNGGU PEMERIKSAAN\nFoto kamu sedang diperiksa oleh Admin.";
+
+    faceStatus.style.background = "#fff3cd";
+
+    faceMessage.textContent =
+      "Pengajuan sedang menunggu pemeriksaan Admin.";
+  }
+
+  faceStatus.style.whiteSpace = "pre-line";
 }
+
+// ==============================
+// BUKA KAMERA
+// ==============================
 
 startCameraButton.addEventListener("click", async function() {
   if (!faceConsent.checked) {
@@ -249,12 +319,17 @@ startCameraButton.addEventListener("click", async function() {
     captureFaceButton.disabled = false;
     stopCameraButton.disabled = false;
 
-    faceMessage.textContent = "Kamera aktif. Silakan ambil foto.";
+    faceMessage.textContent =
+      "Kamera aktif. Silakan ambil foto.";
   } catch (error) {
     faceMessage.textContent =
       "Tidak bisa membuka kamera: " + error.message;
   }
 });
+
+// ==============================
+// AMBIL FOTO
+// ==============================
 
 captureFaceButton.addEventListener("click", function() {
   if (!cameraStream || !faceCamera.videoWidth) {
@@ -266,6 +341,7 @@ captureFaceButton.addEventListener("click", function() {
   faceCanvas.height = faceCamera.videoHeight;
 
   const context = faceCanvas.getContext("2d");
+
   context.drawImage(
     faceCamera,
     0,
@@ -276,21 +352,28 @@ captureFaceButton.addEventListener("click", function() {
 
   faceCanvas.toBlob(function(blob) {
     if (!blob) {
-      faceMessage.textContent = "Gagal mengambil foto.";
+      faceMessage.textContent =
+        "Gagal mengambil foto.";
       return;
     }
 
     capturedPhoto = blob;
+
     facePreview.src = URL.createObjectURL(blob);
     facePreview.style.display = "block";
 
     submitFaceButton.disabled = false;
+
     faceMessage.textContent =
       "Foto berhasil diambil. Periksa pratinjau sebelum mengirim.";
   }, "image/jpeg", 0.85);
 
   stopCamera();
 });
+
+// ==============================
+// MATIKAN KAMERA
+// ==============================
 
 function stopCamera() {
   if (cameraStream) {
@@ -308,11 +391,16 @@ function stopCamera() {
 
 stopCameraButton.addEventListener("click", stopCamera);
 
+// ==============================
+// KIRIM FOTO VERIFIKASI
+// ==============================
+
 submitFaceButton.addEventListener("click", async function() {
   if (!capturedPhoto || !currentUser) return;
 
   submitFaceButton.disabled = true;
-  faceMessage.textContent = "Mengirim foto verifikasi...";
+  faceMessage.textContent =
+    "Mengirim foto verifikasi...";
 
   const filePath =
     currentUser.id + "/" + Date.now() + ".jpg";
@@ -347,30 +435,48 @@ submitFaceButton.addEventListener("click", async function() {
       "Foto berhasil dikirim. Menunggu pemeriksaan Admin.";
 
     capturedPhoto = null;
+
     facePreview.style.display = "none";
     facePreview.src = "";
 
     await loadFaceStatus();
 
   } catch (error) {
-    faceMessage.textContent = "Gagal: " + error.message;
+    faceMessage.textContent =
+      "Gagal: " + error.message;
+
     submitFaceButton.disabled = false;
   }
 });
 
+// ==============================
+// PERSETUJUAN KAMERA
+// ==============================
+
 faceConsent.addEventListener("change", function() {
   if (!faceConsent.checked) {
     stopCamera();
+
     capturedPhoto = null;
+
     submitFaceButton.disabled = true;
+
     facePreview.style.display = "none";
+    facePreview.src = "";
   }
 });
 
+// ==============================
+// LOGOUT
+// ==============================
+
 async function logout() {
   stopCamera();
+
   await supabaseClient.auth.signOut();
+
   window.location.href = "index.html";
 }
 
+// JALANKAN APLIKASI
 checkEmployee();
