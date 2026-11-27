@@ -77,3 +77,30 @@ async function ambilLokasiKantor() {
   );
 }
 
+const tambahForm = document.getElementById("tambahKaryawanForm");
+const tambahMessage = document.getElementById("tambahKaryawanMessage");
+
+tambahForm.addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const nama = document.getElementById("namaKaryawan").value.trim();
+  const email = document.getElementById("emailKaryawan").value.trim();
+
+  tambahMessage.textContent = "Sedang mendaftarkan...";
+
+  const { data, error } = await supabaseClient.functions.invoke(
+    "dynamic-function",
+    {
+      body: { nama, email }
+    }
+  );
+
+  if (error || data?.error) {
+    tambahMessage.textContent =
+      "Gagal: " + (data?.error || error.message);
+    return;
+  }
+
+  tambahMessage.textContent = "Undangan berhasil dikirim ke email karyawan!";
+  tambahForm.reset();
+});
