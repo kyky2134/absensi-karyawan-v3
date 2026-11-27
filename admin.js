@@ -34,10 +34,7 @@ async function logout() {
   window.location.href = "index.html";
 }
 
-// ==============================
 // LOKASI KANTOR
-// ==============================
-
 async function ambilLokasiKantor() {
   const message = document.getElementById("lokasiMessage");
 
@@ -78,10 +75,7 @@ async function ambilLokasiKantor() {
   );
 }
 
-// ==============================
-// DAFTARKAN KARYAWAN BARU
-// ==============================
-
+// DAFTARKAN KARYAWAN
 const tambahForm = document.getElementById("tambahKaryawanForm");
 const tambahMessage = document.getElementById("tambahKaryawanMessage");
 
@@ -138,10 +132,7 @@ if (tambahForm) {
   });
 }
 
-// ==============================
 // FUNGSI BANTUAN
-// ==============================
-
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, function(char) {
     return {
@@ -175,13 +166,9 @@ function formatTanggal(value) {
   });
 }
 
-// ==============================
 // DATA KARYAWAN
-// ==============================
-
 async function lihatDataKaryawan() {
   const container = document.getElementById("dataKaryawanContainer");
-
   if (!container) return;
 
   container.innerHTML = "Memuat data karyawan...";
@@ -237,13 +224,9 @@ async function lihatDataKaryawan() {
   container.innerHTML = html;
 }
 
-// ==============================
 // DATA ABSENSI
-// ==============================
-
 async function lihatDataAbsensi() {
   const container = document.getElementById("dataAbsensiContainer");
-
   if (!container) return;
 
   container.innerHTML = "Memuat data absensi...";
@@ -251,14 +234,8 @@ async function lihatDataAbsensi() {
   const { data, error } = await supabaseClient
     .from("absensi")
     .select(`
-      id,
-      user_id,
-      tanggal,
-      jam_masuk,
-      jam_pulang,
-      status,
-      latitude,
-      longitude
+      id, user_id, tanggal, jam_masuk,
+      jam_pulang, status, latitude, longitude
     `)
     .order("tanggal", { ascending: false });
 
@@ -286,7 +263,6 @@ async function lihatDataAbsensi() {
   }
 
   const namaMap = {};
-
   (profiles || []).forEach(profile => {
     namaMap[profile.id] = profile.nama;
   });
@@ -340,13 +316,9 @@ async function lihatDataAbsensi() {
   container.innerHTML = html;
 }
 
-// ==============================
-// VERIFIKASI WAJAH KARYAWAN
-// ==============================
-
+// VERIFIKASI WAJAH
 async function lihatVerifikasiWajah() {
   const container = document.getElementById("faceVerificationContainer");
-
   if (!container) return;
 
   container.innerHTML = "Memuat pengajuan verifikasi...";
@@ -379,7 +351,6 @@ async function lihatVerifikasiWajah() {
   }
 
   const namaMap = {};
-
   (profiles || []).forEach(profile => {
     namaMap[profile.id] = profile.nama;
   });
@@ -393,7 +364,6 @@ async function lihatVerifikasiWajah() {
         .createSignedUrl(item.storage_path, 300);
 
     const card = document.createElement("div");
-
     card.style.cssText =
       "border:1px solid #ccc;padding:15px;margin:12px 0;border-radius:10px;";
 
@@ -430,7 +400,6 @@ async function lihatVerifikasiWajah() {
 
       const approve = document.createElement("button");
       approve.textContent = "Setujui";
-
       approve.addEventListener("click", () => {
         prosesVerifikasi(item.id, "disetujui", note.value);
       });
@@ -438,13 +407,11 @@ async function lihatVerifikasiWajah() {
       const reject = document.createElement("button");
       reject.textContent = "Tolak";
       reject.style.marginLeft = "8px";
-
       reject.addEventListener("click", () => {
         if (!note.value.trim()) {
           alert("Isi alasan penolakan terlebih dahulu.");
           return;
         }
-
         prosesVerifikasi(item.id, "ditolak", note.value);
       });
 
@@ -482,15 +449,11 @@ async function prosesVerifikasi(id, status, catatan) {
   }
 
   alert(data || "Verifikasi berhasil diperbarui.");
-
   await lihatVerifikasiWajah();
   await lihatDataKaryawan();
 }
 
-// ==============================
 // LAPORAN ABSENSI
-// ==============================
-
 let reportRows = [];
 
 async function lihatLaporanAbsensi() {
@@ -499,11 +462,8 @@ async function lihatLaporanAbsensi() {
 
   if (!container || !summary) return;
 
-  const startDate =
-    document.getElementById("reportStartDate").value;
-
-  const endDate =
-    document.getElementById("reportEndDate").value;
+  const startDate = document.getElementById("reportStartDate").value;
+  const endDate = document.getElementById("reportEndDate").value;
 
   if (startDate && endDate && startDate > endDate) {
     alert("Tanggal mulai tidak boleh melewati tanggal akhir.");
@@ -515,38 +475,23 @@ async function lihatLaporanAbsensi() {
 
   let query = supabaseClient
     .from("absensi")
-    .select(`
-      id,
-      user_id,
-      tanggal,
-      jam_masuk,
-      jam_pulang,
-      status
-    `)
+    .select("id, user_id, tanggal, jam_masuk, jam_pulang, status")
     .order("tanggal", { ascending: false });
 
-  if (startDate) {
-    query = query.gte("tanggal", startDate);
-  }
-
-  if (endDate) {
-    query = query.lte("tanggal", endDate);
-  }
+  if (startDate) query = query.gte("tanggal", startDate);
+  if (endDate) query = query.lte("tanggal", endDate);
 
   const { data, error } = await query;
 
   if (error) {
-    container.textContent =
-      "Gagal mengambil laporan: " + error.message;
+    container.textContent = "Gagal mengambil laporan: " + error.message;
     summary.textContent = "Laporan gagal dimuat.";
     reportRows = [];
     return;
   }
 
   if (!data || data.length === 0) {
-    container.innerHTML =
-      "<p>Tidak ada data absensi pada rentang tanggal tersebut.</p>";
-
+    container.innerHTML = "<p>Tidak ada data absensi pada rentang tanggal tersebut.</p>";
     summary.textContent = "Total catatan: 0";
     reportRows = [];
     return;
@@ -554,11 +499,10 @@ async function lihatLaporanAbsensi() {
 
   const userIds = [...new Set(data.map(item => item.user_id))];
 
-  const { data: profiles, error: profileError } =
-    await supabaseClient
-      .from("profiles")
-      .select("id, nama, nomor_paspor")
-      .in("id", userIds);
+  const { data: profiles, error: profileError } = await supabaseClient
+    .from("profiles")
+    .select("id, nama, nomor_paspor")
+    .in("id", userIds);
 
   if (profileError) {
     container.textContent =
@@ -568,7 +512,6 @@ async function lihatLaporanAbsensi() {
   }
 
   const profileMap = {};
-
   (profiles || []).forEach(profile => {
     profileMap[profile.id] = profile;
   });
@@ -599,14 +542,15 @@ async function lihatLaporanAbsensi() {
   });
 
   const total = reportRows.length;
-
   const hadir = reportRows.filter(item =>
     String(item.status).toLowerCase() === "hadir"
   ).length;
-
   const belumPulang = reportRows.filter(item =>
     item.jam_masuk !== "-" && item.jam_pulang === "-"
   ).length;
+
+  summary.style.cssText =
+    "color:#222!important;background:#f1f5f9!important;padding:15px;border-radius:8px;";
 
   summary.innerHTML = `
     <strong>Ringkasan Laporan</strong>
@@ -616,18 +560,18 @@ async function lihatLaporanAbsensi() {
   `;
 
   let html = `
-    <h3>Detail Laporan Absensi</h3>
-    <div class="table-wrapper">
-      <table>
+    <h3 style="color:#222!important;">Detail Laporan Absensi</h3>
+    <div style="overflow-x:auto;background:#fff!important;">
+      <table style="width:100%;border-collapse:collapse;background:#fff!important;color:#222!important;">
         <thead>
-          <tr>
-            <th>No</th>
-            <th>Nama Karyawan</th>
-            <th>Nomor Paspor</th>
-            <th>Tanggal</th>
-            <th>Jam Masuk</th>
-            <th>Jam Pulang</th>
-            <th>Status</th>
+          <tr style="background:#e2e8f0!important;color:#222!important;">
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">No</th>
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">Nama Karyawan</th>
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">Nomor Paspor</th>
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">Tanggal</th>
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">Jam Masuk</th>
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">Jam Pulang</th>
+            <th style="padding:12px;border:1px solid #ccc;color:#222!important;background:#e2e8f0!important;">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -635,31 +579,23 @@ async function lihatLaporanAbsensi() {
 
   reportRows.forEach((item, index) => {
     html += `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${escapeHTML(item.nama)}</td>
-        <td>${escapeHTML(item.nomor_paspor)}</td>
-        <td>${escapeHTML(formatTanggal(item.tanggal))}</td>
-        <td>${escapeHTML(item.jam_masuk)}</td>
-        <td>${escapeHTML(item.jam_pulang)}</td>
-        <td>${escapeHTML(item.status)}</td>
+      <tr style="background:#fff!important;color:#222!important;">
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${index + 1}</td>
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${escapeHTML(item.nama)}</td>
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${escapeHTML(item.nomor_paspor)}</td>
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${escapeHTML(formatTanggal(item.tanggal))}</td>
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${escapeHTML(item.jam_masuk)}</td>
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${escapeHTML(item.jam_pulang)}</td>
+        <td style="padding:12px;border:1px solid #ccc;color:#222!important;background:#fff!important;">${escapeHTML(item.status)}</td>
       </tr>
     `;
   });
 
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-
+  html += "</tbody></table></div>";
   container.innerHTML = html;
 }
 
-// ==============================
-// DOWNLOAD LAPORAN CSV
-// ==============================
-
+// DOWNLOAD CSV
 function downloadLaporanAbsensi() {
   if (!reportRows.length) {
     alert("Tampilkan laporan terlebih dahulu sebelum mengunduh.");
@@ -669,7 +605,6 @@ function downloadLaporanAbsensi() {
   function csvValue(value) {
     let text = String(value ?? "");
 
-    // Mencegah isi CSV ditafsirkan sebagai formula Excel.
     if (/^[\s]*[=+\-@]/.test(text)) {
       text = "'" + text;
     }
@@ -707,7 +642,6 @@ function downloadLaporanAbsensi() {
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-
   link.href = url;
   link.download = "laporan-absensi-attendpro.csv";
 
@@ -718,8 +652,5 @@ function downloadLaporanAbsensi() {
   URL.revokeObjectURL(url);
 }
 
-// ==============================
 // JALANKAN ADMIN
-// ==============================
-
 checkAdmin();
