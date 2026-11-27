@@ -154,6 +154,27 @@ function escapeHTML(value) {
   });
 }
 
+function formatWaktu(value) {
+  if (!value) return "-";
+
+  return new Date(value).toLocaleString("id-ID", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Asia/Jakarta"
+  });
+}
+
+function formatTanggal(value) {
+  if (!value) return "-";
+
+  return new Date(value + "T00:00:00").toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Jakarta"
+  });
+}
+
 // ==============================
 // DATA KARYAWAN
 // ==============================
@@ -270,16 +291,6 @@ async function lihatDataAbsensi() {
     namaMap[profile.id] = profile.nama;
   });
 
-  function formatWaktu(value) {
-    if (!value) return "-";
-
-    return new Date(value).toLocaleString("id-ID", {
-      dateStyle: "short",
-      timeStyle: "short",
-      timeZone: "Asia/Jakarta"
-    });
-  }
-
   let html = `
     <h2>Data Absensi</h2>
     <p>Total catatan absensi: ${data.length}</p>
@@ -301,10 +312,6 @@ async function lihatDataAbsensi() {
   `;
 
   data.forEach((item, index) => {
-    const tanggal = item.tanggal
-      ? new Date(item.tanggal + "T00:00:00").toLocaleDateString("id-ID")
-      : "-";
-
     const lokasi =
       item.latitude != null && item.longitude != null
         ? `${escapeHTML(item.latitude)}, ${escapeHTML(item.longitude)}`
@@ -314,7 +321,7 @@ async function lihatDataAbsensi() {
       <tr>
         <td>${index + 1}</td>
         <td>${escapeHTML(namaMap[item.user_id] || "Tidak diketahui")}</td>
-        <td>${escapeHTML(tanggal)}</td>
+        <td>${escapeHTML(formatTanggal(item.tanggal))}</td>
         <td>${escapeHTML(formatWaktu(item.jam_masuk))}</td>
         <td>${escapeHTML(formatWaktu(item.jam_pulang))}</td>
         <td>${escapeHTML(item.status || "-")}</td>
@@ -479,5 +486,240 @@ async function prosesVerifikasi(id, status, catatan) {
   await lihatVerifikasiWajah();
   await lihatDataKaryawan();
 }
+
+// ==============================
+// LAPORAN ABSENSI
+// ==============================
+
+let reportRows = [];
+
+async function lihatLaporanAbsensi() {
+  const container = document.getElementById("reportContainer");
+  const summary = document.getElementById("reportSummary");
+
+  if (!container || !summary) return;
+
+  const startDate =
+    document.getElementById("reportStartDate").value;
+
+  const endDate =
+    document.getElementById("reportEndDate").value;
+
+  if (startDate && endDate && startDate > endDate) {
+    alert("Tanggal mulai tidak boleh melewati tanggal akhir.");
+    return;
+  }
+
+  container.innerHTML = "Memuat laporan absensi...";
+  summary.textContent = "Sedang menghitung laporan...";
+
+  let query = supabaseClient
+    .from("absensi")
+    .select(`
+      id,
+      user_id,
+      tanggal,
+      jam_masuk,
+      jam_pulang,
+      status
+    `)
+    .order("tanggal", { ascending: false });
+
+  if (startDate) {
+    query = query.gte("tanggal", startDate);
+  }
+
+  if (endDate) {
+    query = query.lte("tanggal", endDate);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    container.textContent =
+      "Gagal mengambil laporan: " + error.message;
+    summary.textContent = "Laporan gagal dimuat.";
+    reportRows = [];
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML =
+      "<p>Tidak ada data absensi pada rentang tanggal tersebut.</p>";
+
+    summary.textContent = "Total catatan: 0";
+    reportRows = [];
+    return;
+  }
+
+  const userIds = [...new Set(data.map(item => item.user_id))];
+
+  const { data: profiles, error: profileError } =
+    await supabaseClient
+      .from("profiles")
+      .select("id, nama, nomor_paspor")
+      .in("id", userIds);
+
+  if (profileError) {
+    container.textContent =
+      "Gagal mengambil data karyawan: " + profileError.message;
+    reportRows = [];
+    return;
+  }
+
+  const profileMap = {};
+
+  (profiles || []).forEach(profile => {
+    profileMap[profile.id] = profile;
+  });
+
+  reportRows = data.map(item => {
+    const profile = profileMap[item.user_id] || {};
+
+    return {
+      nama: profile.nama || "Tidak diketahui",
+      nomor_paspor: profile.nomor_paspor || "-",
+      tanggal: item.tanggal || "-",
+      jam_masuk: item.jam_masuk
+        ? new Date(item.jam_masuk).toLocaleTimeString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        : "-",
+      jam_pulang: item.jam_pulang
+        ? new Date(item.jam_pulang).toLocaleTimeString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        : "-",
+      status: item.status || "-"
+    };
+  });
+
+  const total = reportRows.length;
+
+  const hadir = reportRows.filter(item =>
+    String(item.status).toLowerCase() === "hadir"
+  ).length;
+
+  const belumPulang = reportRows.filter(item =>
+    item.jam_masuk !== "-" && item.jam_pulang === "-"
+  ).length;
+
+  summary.innerHTML = `
+    <strong>Ringkasan Laporan</strong>
+    <p>Total catatan absensi: ${total}</p>
+    <p>Total status hadir: ${hadir}</p>
+    <p>Belum absen pulang: ${belumPulang}</p>
+  `;
+
+  let html = `
+    <h3>Detail Laporan Absensi</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Karyawan</th>
+            <th>Nomor Paspor</th>
+            <th>Tanggal</th>
+            <th>Jam Masuk</th>
+            <th>Jam Pulang</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  reportRows.forEach((item, index) => {
+    html += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHTML(item.nama)}</td>
+        <td>${escapeHTML(item.nomor_paspor)}</td>
+        <td>${escapeHTML(formatTanggal(item.tanggal))}</td>
+        <td>${escapeHTML(item.jam_masuk)}</td>
+        <td>${escapeHTML(item.jam_pulang)}</td>
+        <td>${escapeHTML(item.status)}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+// ==============================
+// DOWNLOAD LAPORAN CSV
+// ==============================
+
+function downloadLaporanAbsensi() {
+  if (!reportRows.length) {
+    alert("Tampilkan laporan terlebih dahulu sebelum mengunduh.");
+    return;
+  }
+
+  function csvValue(value) {
+    let text = String(value ?? "");
+
+    // Mencegah isi CSV ditafsirkan sebagai formula Excel.
+    if (/^[\s]*[=+\-@]/.test(text)) {
+      text = "'" + text;
+    }
+
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  const headers = [
+    "Nama Karyawan",
+    "Nomor Paspor",
+    "Tanggal",
+    "Jam Masuk",
+    "Jam Pulang",
+    "Status"
+  ];
+
+  const rows = reportRows.map(item => [
+    item.nama,
+    item.nomor_paspor,
+    item.tanggal,
+    item.jam_masuk,
+    item.jam_pulang,
+    item.status
+  ]);
+
+  const csvContent = [
+    headers.map(csvValue).join(","),
+    ...rows.map(row => row.map(csvValue).join(","))
+  ].join("\r\n");
+
+  const blob = new Blob(
+    ["\uFEFF" + csvContent],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "laporan-absensi-attendpro.csv";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+// ==============================
+// JALANKAN ADMIN
+// ==============================
 
 checkAdmin();
