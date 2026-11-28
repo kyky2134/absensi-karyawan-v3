@@ -2,102 +2,192 @@
 const loginForm = document.getElementById("loginForm");
 const message = document.getElementById("message");
 
+const loginSection = document.getElementById("loginSection");
+const recoveryForm = document.getElementById("recoveryForm");
+
+const forgotPassword = document.getElementById("forgotPassword");
+const newPasswordForm = document.getElementById("newPasswordForm");
+
+// URL website AttendPro
+const SITE_URL =
+  "https://kyky2134.github.io/absensi-karyawan-v3/";
+
 // ==================================
-// PROSES AKTIVASI AKUN DARI UNDANGAN
+// TAMPILKAN PESAN
 // ==================================
 
-async function cekUndangan() {
+function showMessage(text, color = "#2863bd") {
+  message.textContent = text;
+  message.style.color = color;
+}
+
+// ==================================
+// PROSES LINK UNDANGAN / RECOVERY
+// ==================================
+
+async function cekLinkAuth() {
   const hash = window.location.hash;
   const params = new URLSearchParams(window.location.search);
 
-  const isInvite =
-    hash.includes("type=invite") ||
-    hash.includes("type=recovery") ||
-    params.has("code");
+  const hashParams = new URLSearchParams(
+    hash.startsWith("#") ? hash.substring(1) : hash
+  );
 
-  if (!isInvite) return;
+  const authError = hashParams.get("error");
+  const errorDescription = hashParams.get("error_description");
 
-  loginForm.style.display = "none";
-
-  message.textContent = "Memeriksa link undangan...";
-
-  const { data: sessionData, error: sessionError } =
-    await supabaseClient.auth.getSession();
-
-  if (sessionError || !sessionData.session) {
-    message.textContent =
-      "Link undangan tidak valid atau sudah kedaluwarsa. Minta Admin mengirim undangan baru.";
+  if (authError) {
+    showMessage(
+      errorDescription
+        ? decodeURIComponent(errorDescription.replace(/\+/g, " "))
+        : "Link tidak valid atau sudah kedaluwarsa.",
+      "#d93025"
+    );
     return;
   }
 
-  message.textContent = "";
+  let isAuthLink = false;
 
-  const activationForm = document.createElement("form");
+  // Link PKCE
+  if (params.has("code")) {
+    showMessage("Memeriksa link akun...");
 
-  activationForm.innerHTML = `
-    <h2>Buat Password Akun</h2>
+    const { error } =
+      await supabaseClient.auth.exchangeCodeForSession(
+        params.get("code")
+      );
 
-    <p>Silakan buat password untuk akun AttendPro kamu.</p>
+    if (error) {
+      showMessage("Link tidak valid atau kedaluwarsa: " + error.message, "#d93025");
+      return;
+    }
 
-    <input
-      type="password"
-      id="newPassword"
-      placeholder="Password baru"
-      minlength="8"
-      required
-    >
+    isAuthLink = true;
+  }
 
-    <input
-      type="password"
-      id="confirmPassword"
-      placeholder="Ulangi password"
-      minlength="8"
-      required
-    >
+  // Link OTP / undangan lama
+  else if (hashParams.get("access_token")) {
+    const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
 
-    <button type="submit">Aktifkan Akun</button>
-  `;
+    const { error } = await supabaseClient.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    });
 
-  loginForm.parentElement.appendChild(activationForm);
+    if (error) {
+      showMessage("Gagal memeriksa link: " + error.message, "#d93025");
+      return;
+    }
 
-  activationForm.addEventListener("submit", async function(e) {
+    isAuthLink = true;
+  }
+
+  if (!isAuthLink) {
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data.session && hashParams.get("type")) {
+      isAuthLink = true;
+    }
+  }
+
+  if (!isAuthLink) return;
+
+  loginSection.style.display = "none";
+  recoveryForm.style.display = "block";
+
+  const type = hashParams.get("type");
+
+  if (type === "recovery") {
+    showMessage("Silakan buat password baru.");
+  } else {
+    showMessage("Undangan berhasil diperiksa. Buat password akun kamu.");
+  }
+}
+
+// ==================================
+// LUPA PASSWORD
+// ==================================
+
+if (forgotPassword) {
+  forgotPassword.addEventListener("click", async function(e) {
     e.preventDefault();
 
-    const password = document.getElementById("newPassword").value;
+    const email = document.getElementById("email").value.trim();
+
+    if (!email) {
+      showMessage("Masukkan email terlebih dahulu.", "#d93025");
+      document.getElementById("email").focus();
+      return;
+    }
+
+    showMessage("Sedang mengirim email pemulihan...");
+
+    const { error } =
+      await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: SITE_URL
+      });
+
+    if (error) {
+      showMessage("Gagal mengirim email: " + error.message, "#d93025");
+      return;
+    }
+
+    showMessage(
+      "Email pemulihan berhasil dikirim. Periksa kotak masuk atau spam."
+    );
+  });
+}
+
+// ==================================
+// SIMPAN PASSWORD BARU
+// ==================================
+
+if (newPasswordForm) {
+  newPasswordForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const password =
+      document.getElementById("newPassword").value;
+
     const confirmPassword =
       document.getElementById("confirmPassword").value;
 
     if (password.length < 8) {
-      message.textContent = "Password minimal 8 karakter.";
+      showMessage("Password minimal 8 karakter.", "#d93025");
       return;
     }
 
     if (password !== confirmPassword) {
-      message.textContent = "Password tidak sama.";
+      showMessage("Password tidak sama.", "#d93025");
       return;
     }
 
-    message.textContent = "Sedang mengaktifkan akun...";
+    showMessage("Sedang menyimpan password...");
+
+    const { data: sessionData, error: sessionError } =
+      await supabaseClient.auth.getSession();
+
+    if (sessionError || !sessionData.session) {
+      showMessage(
+        "Sesi pemulihan tidak ditemukan. Silakan minta link baru.",
+        "#d93025"
+      );
+      return;
+    }
 
     const { error } = await supabaseClient.auth.updateUser({
       password: password
     });
 
     if (error) {
-      message.textContent = "Gagal mengaktifkan akun: " + error.message;
+      showMessage("Gagal menyimpan password: " + error.message, "#d93025");
       return;
     }
 
-    const {
-      data: { user },
-      error: userError
-    } = await supabaseClient.auth.getUser();
+    showMessage("Password berhasil dibuat! Mengarahkan ke dashboard.");
 
-    if (userError || !user) {
-      message.textContent = "Akun berhasil diperbarui, silakan login.";
-      await supabaseClient.auth.signOut();
-      return;
-    }
+    const user = sessionData.session.user;
 
     const { data: profile, error: profileError } =
       await supabaseClient
@@ -107,18 +197,25 @@ async function cekUndangan() {
         .single();
 
     if (profileError || !profile) {
-      message.textContent =
-        "Password berhasil dibuat, tetapi profil belum ditemukan.";
+      showMessage(
+        "Password berhasil dibuat. Silakan login kembali.",
+        "#2863bd"
+      );
+
+      await supabaseClient.auth.signOut();
+      setTimeout(() => {
+        window.location.href = SITE_URL;
+      }, 2000);
       return;
     }
 
-    message.textContent = "Akun berhasil diaktifkan!";
-
-    if (profile.role === "admin") {
-      window.location.href = "admin.html";
-    } else {
-      window.location.href = "karyawan.html";
-    }
+    setTimeout(() => {
+      if (profile.role === "admin") {
+        window.location.href = "admin.html";
+      } else {
+        window.location.href = "karyawan.html";
+      }
+    }, 1500);
   });
 }
 
@@ -129,18 +226,19 @@ async function cekUndangan() {
 loginForm.addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  const email = document.getElementById("email").value;
+  const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
-  message.textContent = "Sedang login...";
+  showMessage("Sedang login...");
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
 
   if (error) {
-    message.textContent = "Email atau password salah";
+    showMessage("Email atau password salah.", "#d93025");
     return;
   }
 
@@ -153,16 +251,22 @@ loginForm.addEventListener("submit", async function(e) {
 
   if (profileError || !profile) {
     await supabaseClient.auth.signOut();
-    message.textContent = "Gagal mengambil profil pengguna.";
+    showMessage("Gagal mengambil profil pengguna.", "#d93025");
     return;
   }
 
   if (profile.role === "admin") {
     window.location.href = "admin.html";
-  } else {
+  } else if (profile.role === "karyawan") {
     window.location.href = "karyawan.html";
+  } else {
+    await supabaseClient.auth.signOut();
+    showMessage("Role akun tidak dikenali.", "#d93025");
   }
 });
 
-// Jalankan pemeriksaan undangan
-cekUndangan();
+// ==================================
+// JALANKAN PEMERIKSAAN LINK
+// ==================================
+
+cekLinkAuth();
