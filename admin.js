@@ -1,4 +1,6 @@
 
+let adminUserId = null;
+
 // ==============================
 // CEK ADMIN DAN LOGOUT
 // ==============================
@@ -27,6 +29,8 @@ async function checkAdmin() {
     window.location.href = "index.html";
     return;
   }
+
+  adminUserId = user.id;
 
   if (message) {
     message.textContent = "Selamat datang, " + profile.nama;
@@ -462,6 +466,205 @@ async function prosesVerifikasi(id, status, catatan) {
   await lihatDataKaryawan();
 }
 
+// ==========================================
+// PENGAJUAN IZIN DAN CUTI
+// ==========================================
+
+async function muatPengajuanIzin() {
+  const container = document.getElementById(
+    "pengajuanIzinAdminContainer"
+  );
+
+  const message = document.getElementById(
+    "pengajuanIzinAdminMessage"
+  );
+
+  if (!container || !message) return;
+
+  message.textContent = "Memuat pengajuan karyawan...";
+  container.innerHTML = "";
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("pengajuan_izin")
+      .select(`
+        id,
+        user_id,
+        jenis,
+        tanggal_mulai,
+        tanggal_selesai,
+        alasan,
+        status,
+        catatan_admin,
+        created_at
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      message.textContent = "Belum ada pengajuan izin atau cuti.";
+      return;
+    }
+
+    const userIds = [...new Set(data.map(item => item.user_id))];
+
+    const { data: profiles, error: profileError } =
+      await supabaseClient
+        .from("profiles")
+        .select("id, nama")
+        .in("id", userIds);
+
+    if (profileError) throw profileError;
+
+    const namaMap = {};
+
+    (profiles || []).forEach(profile => {
+      namaMap[profile.id] = profile.nama;
+    });
+
+    message.textContent =
+      "Total pengajuan: " + data.length;
+
+    for (const item of data) {
+      const card = document.createElement("div");
+
+      card.style.cssText = `
+        border:1px solid #dbe2ea;
+        padding:16px;
+        margin:15px 0;
+        border-radius:12px;
+        background:#fff;
+      `;
+
+      const nama = document.createElement("h3");
+      nama.textContent = namaMap[item.user_id] || "Karyawan";
+      card.appendChild(nama);
+
+      const detail = document.createElement("div");
+
+      detail.innerHTML = `
+        <p><strong>Jenis:</strong> ${escapeHTML(item.jenis)}</p>
+        <p><strong>Tanggal Mulai:</strong> ${escapeHTML(formatTanggal(item.tanggal_mulai))}</p>
+        <p><strong>Tanggal Selesai:</strong> ${escapeHTML(formatTanggal(item.tanggal_selesai))}</p>
+        <p><strong>Alasan:</strong> ${escapeHTML(item.alasan)}</p>
+        <p><strong>Status:</strong> ${escapeHTML(item.status)}</p>
+        <p><strong>Catatan Admin:</strong> ${escapeHTML(item.catatan_admin || "-")}</p>
+      `;
+
+      card.appendChild(detail);
+
+      if (item.status === "menunggu") {
+        const catatan = document.createElement("textarea");
+
+        catatan.placeholder = "Catatan Admin (opsional)";
+        catatan.style.cssText = `
+          display:block;
+          width:100%;
+          min-height:75px;
+          padding:10px;
+          margin:12px 0;
+          border:1px solid #cbd5e1;
+          border-radius:8px;
+          box-sizing:border-box;
+        `;
+
+        const approve = document.createElement("button");
+        approve.textContent = "Setujui";
+
+        approve.addEventListener("click", () => {
+          prosesPengajuanIzin(
+            item.id,
+            "disetujui",
+            catatan.value
+          );
+        });
+
+        const reject = document.createElement("button");
+        reject.textContent = "Tolak";
+        reject.style.background = "#dc2626";
+
+        reject.addEventListener("click", () => {
+          if (!catatan.value.trim()) {
+            alert("Isi alasan penolakan terlebih dahulu.");
+            return;
+          }
+
+          prosesPengajuanIzin(
+            item.id,
+            "ditolak",
+            catatan.value
+          );
+        });
+
+        card.append(catatan, approve, reject);
+      }
+
+      container.appendChild(card);
+    }
+
+    const reload = document.createElement("button");
+    reload.textContent = "Muat Ulang Pengajuan";
+    reload.addEventListener("click", muatPengajuanIzin);
+
+    container.appendChild(reload);
+
+  } catch (error) {
+    console.error("Pengajuan izin:", error);
+    message.textContent =
+      "Gagal memuat pengajuan: " + error.message;
+  }
+}
+
+// PROSES SETUJUI ATAU TOLAK
+async function prosesPengajuanIzin(id, status, catatan) {
+  if (!adminUserId) {
+    alert("Data Admin belum dimuat. Silakan muat ulang halaman.");
+    return;
+  }
+
+  const pertanyaan = status === "disetujui"
+    ? "Apakah kamu yakin ingin menyetujui pengajuan ini?"
+    : "Apakah kamu yakin ingin menolak pengajuan ini?";
+
+  if (!confirm(pertanyaan)) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("pengajuan_izin")
+      .update({
+        status: status,
+        catatan_admin: catatan.trim() || null,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: adminUserId
+      })
+      .eq("id", id)
+      .eq("status", "menunggu")
+      .select("id");
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      alert("Pengajuan sudah diproses atau tidak dapat diperbarui.");
+      await muatPengajuanIzin();
+      return;
+    }
+
+    alert(
+      status === "disetujui"
+        ? "Pengajuan berhasil disetujui!"
+        : "Pengajuan berhasil ditolak."
+    );
+
+    await muatPengajuanIzin();
+
+  } catch (error) {
+    console.error("Gagal memproses pengajuan:", error);
+
+    alert("Gagal memproses pengajuan: " + error.message);
+  }
+}
+
 // ==============================
 // LAPORAN ABSENSI
 // ==============================
@@ -709,19 +912,14 @@ async function muatGrafikAbsensi() {
     return;
   }
 
-  // GRAFIK HARIAN
   const dailyMap = {};
 
   data.forEach(item => {
     if (!item.tanggal) return;
-
     dailyMap[item.tanggal] = (dailyMap[item.tanggal] || 0) + 1;
   });
 
-  const dailyDates = Object.keys(dailyMap)
-    .sort()
-    .slice(-7);
-
+  const dailyDates = Object.keys(dailyMap).sort().slice(-7);
   const dailyLabels = dailyDates.map(formatTanggal);
   const dailyValues = dailyDates.map(date => dailyMap[date]);
 
@@ -758,7 +956,6 @@ async function muatGrafikAbsensi() {
     }
   });
 
-  // GRAFIK BULANAN
   const monthlyMap = {};
 
   data.forEach(item => {
@@ -768,9 +965,7 @@ async function muatGrafikAbsensi() {
     monthlyMap[bulan] = (monthlyMap[bulan] || 0) + 1;
   });
 
-  const monthKeys = Object.keys(monthlyMap)
-    .sort()
-    .slice(-12);
+  const monthKeys = Object.keys(monthlyMap).sort().slice(-12);
 
   const monthLabels = monthKeys.map(bulan => {
     const [tahun, angkaBulan] = bulan.split("-");
