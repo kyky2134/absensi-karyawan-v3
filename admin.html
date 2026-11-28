@@ -24,7 +24,6 @@
       min-height: 100vh;
     }
 
-    /* SIDEBAR */
     .admin-sidebar {
       width: 245px;
       flex-shrink: 0;
@@ -95,7 +94,6 @@
       font-weight: bold;
     }
 
-    /* MAIN CONTENT */
     .admin-main {
       flex: 1;
       min-width: 0;
@@ -146,7 +144,6 @@
       font-size: 13px;
     }
 
-    /* STATISTIC CARDS */
     .welcome-card {
       background: linear-gradient(120deg, #1d4ed8, #2563eb);
       color: white;
@@ -208,7 +205,6 @@
       line-height: 1.5;
     }
 
-    /* SECTION */
     .admin-section {
       background: white;
       margin: 0 0 22px;
@@ -237,7 +233,6 @@
       line-height: 1.6;
     }
 
-    /* FORM */
     .admin-section form {
       display: flex;
       flex-wrap: wrap;
@@ -260,7 +255,6 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
     }
 
-    /* BUTTONS */
     .admin-main button {
       background: #2563eb;
       color: white;
@@ -283,7 +277,6 @@
       cursor: not-allowed;
     }
 
-    /* TABLE */
     .admin-main table {
       width: 100%;
       border-collapse: collapse;
@@ -322,7 +315,6 @@
       border-radius: 9px;
     }
 
-    /* REPORT */
     .report-filter {
       display: flex;
       flex-wrap: wrap;
@@ -364,7 +356,6 @@
       line-height: 1.7;
     }
 
-    /* CHART */
     .chart-box {
       position: relative;
       width: 100%;
@@ -382,13 +373,13 @@
 
     #chartMessage,
     #tambahKaryawanMessage,
-    #lokasiMessage {
+    #lokasiMessage,
+    #pengajuanIzinAdminMessage {
       font-size: 13px;
       color: #64748b;
       line-height: 1.6;
     }
 
-    /* MOBILE */
     @media (max-width: 900px) {
       .admin-sidebar {
         width: 205px;
@@ -526,6 +517,7 @@
       <a href="#absensi">📋 Data Absensi</a>
       <a href="#lokasi">📍 Lokasi Kantor</a>
       <a href="#verifikasi">🛡️ Verifikasi Wajah</a>
+      <a href="#persetujuanIzin">📝 Pengajuan Izin/Cuti</a>
       <a href="#keterlambatan">⏰ Keterlambatan</a>
       <a href="#statistik">📊 Statistik</a>
       <a href="#laporan">📁 Laporan</a>
@@ -580,6 +572,12 @@
         <div class="quick-icon">🛡️</div>
         <h3>Verifikasi Wajah</h3>
         <p>Periksa pengajuan karyawan.</p>
+      </a>
+
+      <a href="#persetujuanIzin" class="quick-card">
+        <div class="quick-icon">📝</div>
+        <h3>Pengajuan Izin/Cuti</h3>
+        <p>Periksa dan setujui pengajuan karyawan.</p>
       </a>
 
       <a href="#keterlambatan" class="quick-card">
@@ -672,6 +670,26 @@
       </button>
 
       <div id="faceVerificationContainer"></div>
+    </section>
+
+    <!-- PERSETUJUAN IZIN DAN CUTI -->
+    <section class="admin-section" id="persetujuanIzin">
+      <h3>📝 Persetujuan Pengajuan Izin dan Cuti</h3>
+
+      <p>
+        Lihat pengajuan izin, cuti, dan sakit dari seluruh karyawan.
+        Admin dapat menyetujui atau menolak pengajuan.
+      </p>
+
+      <button type="button" onclick="muatPengajuanIzin()">
+        Muat Pengajuan
+      </button>
+
+      <div id="pengajuanIzinAdminMessage">
+        Klik tombol untuk melihat pengajuan karyawan.
+      </div>
+
+      <div id="pengajuanIzinAdminContainer"></div>
     </section>
 
     <!-- KETERLAMBATAN -->
