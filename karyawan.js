@@ -657,3 +657,186 @@ async function logout() {
 // ==============================
 
 checkEmployee();
+
+
+// ==================================
+// FITUR PENGAJUAN IZIN / CUTI
+// ==================================
+
+const izinForm = document.getElementById("izinForm");
+const izinMessage = document.getElementById("izinMessage");
+const muatIzinButton = document.getElementById("muatIzinButton");
+const riwayatIzinContainer =
+  document.getElementById("riwayatIzinContainer");
+
+function escapeIzinHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, function(char) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[char];
+  });
+}
+
+function formatTanggalIzin(tanggal) {
+  if (!tanggal) return "-";
+
+  return new Date(tanggal + "T00:00:00").toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Jakarta"
+    }
+  );
+}
+
+// KIRIM PENGAJUAN
+if (izinForm) {
+  izinForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    if (!currentUser) {
+      izinMessage.textContent = "Akun belum terhubung. Silakan login ulang.";
+      return;
+    }
+
+    const jenis = document.getElementById("jenisIzin").value;
+    const tanggalMulai =
+      document.getElementById("tanggalMulai").value;
+    const tanggalSelesai =
+      document.getElementById("tanggalSelesai").value;
+    const alasan =
+      document.getElementById("alasanIzin").value.trim();
+
+    if (!jenis || !tanggalMulai || !tanggalSelesai || !alasan) {
+      izinMessage.textContent = "Lengkapi semua data pengajuan.";
+      return;
+    }
+
+    if (tanggalSelesai < tanggalMulai) {
+      izinMessage.textContent =
+        "Tanggal selesai tidak boleh sebelum tanggal mulai.";
+      return;
+    }
+
+    if (alasan.length < 5) {
+      izinMessage.textContent =
+        "Alasan pengajuan minimal 5 karakter.";
+      return;
+    }
+
+    const tombol = document.getElementById("kirimIzinButton");
+    tombol.disabled = true;
+    izinMessage.textContent = "Mengirim pengajuan...";
+
+    try {
+      const { error } = await supabaseClient
+        .from("pengajuan_izin")
+        .insert({
+          user_id: currentUser.id,
+          jenis: jenis,
+          tanggal_mulai: tanggalMulai,
+          tanggal_selesai: tanggalSelesai,
+          alasan: alasan
+        });
+
+      if (error) throw error;
+
+      izinMessage.textContent =
+        "Pengajuan berhasil dikirim! Menunggu persetujuan Admin.";
+
+      izinForm.reset();
+
+      await loadRiwayatIzin();
+
+    } catch (error) {
+      console.error("Pengajuan izin:", error);
+      izinMessage.textContent =
+        "Gagal mengirim pengajuan: " + error.message;
+    } finally {
+      tombol.disabled = false;
+    }
+  });
+}
+
+// MUAT RIWAYAT PENGAJUAN
+async function loadRiwayatIzin() {
+  if (!currentUser || !riwayatIzinContainer) return;
+
+  riwayatIzinContainer.textContent =
+    "Memuat riwayat pengajuan...";
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("pengajuan_izin")
+      .select(
+        "id, jenis, tanggal_mulai, tanggal_selesai, alasan, status, catatan_admin, created_at"
+      )
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      riwayatIzinContainer.textContent =
+        "Belum ada pengajuan izin atau cuti.";
+      return;
+    }
+
+    const rows = data.map(item => {
+      let statusLabel = item.status;
+
+      if (item.status === "menunggu") {
+        statusLabel = "Menunggu";
+      } else if (item.status === "disetujui") {
+        statusLabel = "Disetujui";
+      } else if (item.status === "ditolak") {
+        statusLabel = "Ditolak";
+      }
+
+      return `
+        <tr>
+          <td>${escapeIzinHTML(item.jenis)}</td>
+          <td>${escapeIzinHTML(formatTanggalIzin(item.tanggal_mulai))}</td>
+          <td>${escapeIzinHTML(formatTanggalIzin(item.tanggal_selesai))}</td>
+          <td>${escapeIzinHTML(item.alasan)}</td>
+          <td>${escapeIzinHTML(statusLabel)}</td>
+          <td>${escapeIzinHTML(item.catatan_admin || "-")}</td>
+        </tr>
+      `;
+    }).join("");
+
+    riwayatIzinContainer.innerHTML = `
+      <div class="history-wrapper">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Jenis</th>
+              <th>Tanggal Mulai</th>
+              <th>Tanggal Selesai</th>
+              <th>Alasan</th>
+              <th>Status</th>
+              <th>Catatan Admin</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error("Riwayat izin:", error);
+    riwayatIzinContainer.textContent =
+      "Gagal memuat riwayat: " + error.message;
+  }
+}
+
+// TOMBOL MUAT RIWAYAT
+if (muatIzinButton) {
+  muatIzinButton.addEventListener("click", loadRiwayatIzin);
+}
