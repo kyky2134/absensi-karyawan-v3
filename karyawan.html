@@ -8,9 +8,7 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -19,10 +17,7 @@
       font-family: Arial, sans-serif;
     }
 
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
+    .layout { display: flex; min-height: 100vh; }
 
     .sidebar {
       width: 245px;
@@ -85,16 +80,8 @@
       margin-bottom: 25px;
     }
 
-    .topbar h1 {
-      font-size: 25px;
-      margin: 0 0 6px;
-    }
-
-    .topbar p {
-      color: #78869c;
-      margin: 0;
-      font-size: 14px;
-    }
+    .topbar h1 { font-size: 25px; margin: 0 0 6px; }
+    .topbar p { color: #78869c; margin: 0; font-size: 14px; }
 
     .welcome {
       background: linear-gradient(120deg, #2455a4, #3979d8);
@@ -104,16 +91,8 @@
       margin-bottom: 25px;
     }
 
-    .welcome h2 {
-      margin: 0 0 9px;
-      font-size: 23px;
-    }
-
-    .welcome p {
-      margin: 0;
-      color: #e0eaff;
-      font-size: 14px;
-    }
+    .welcome h2 { margin: 0 0 9px; font-size: 23px; }
+    .welcome p { margin: 0; color: #e0eaff; font-size: 14px; }
 
     .section-card {
       background: white;
@@ -125,10 +104,7 @@
       scroll-margin-top: 20px;
     }
 
-    .section-card h3 {
-      margin: 0 0 17px;
-      font-size: 18px;
-    }
+    .section-card h3 { margin: 0 0 17px; font-size: 18px; }
 
     .section-description {
       color: #78869c;
@@ -144,7 +120,10 @@
       margin-bottom: 18px;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
       display: block;
       width: 100%;
       max-width: 500px;
@@ -154,9 +133,16 @@
       border-radius: 9px;
       font-size: 14px;
       outline: none;
+      font-family: Arial, sans-serif;
+      background: white;
     }
 
-    input[type="text"]:focus {
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
       border-color: #3979d8;
     }
 
@@ -172,14 +158,8 @@
       margin: 5px 5px 5px 0;
     }
 
-    button:hover {
-      background: #194b96;
-    }
-
-    button:disabled {
-      background: #aab7c9;
-      cursor: not-allowed;
-    }
+    button:hover { background: #194b96; }
+    button:disabled { background: #aab7c9; cursor: not-allowed; }
 
     .attendance-grid {
       display: grid;
@@ -194,16 +174,8 @@
       background: #f9fbff;
     }
 
-    .attendance-card h4 {
-      margin: 0 0 9px;
-      font-size: 16px;
-    }
-
-    .attendance-card p {
-      color: #78869c;
-      font-size: 13px;
-      margin: 0 0 14px;
-    }
+    .attendance-card h4 { margin: 0 0 9px; font-size: 16px; }
+    .attendance-card p { color: #78869c; font-size: 13px; margin: 0 0 14px; }
 
     .face-section {
       border: 1px solid #e5ebf4;
@@ -220,9 +192,7 @@
       margin-top: 12px;
     }
 
-    #faceCanvas {
-      display: none;
-    }
+    #faceCanvas { display: none; }
 
     #facePreview {
       display: none;
@@ -232,14 +202,9 @@
       margin-top: 12px;
     }
 
-    #faceConsent {
-      margin-right: 7px;
-    }
+    #faceConsent { margin-right: 7px; }
 
-    .history-wrapper {
-      width: 100%;
-      overflow-x: auto;
-    }
+    .history-wrapper { width: 100%; overflow-x: auto; }
 
     .history-table {
       width: 100%;
@@ -249,8 +214,7 @@
       min-width: 500px;
     }
 
-    .history-table th,
-    .history-table td {
+    .history-table th, .history-table td {
       border: 1px solid #e5eaf1;
       padding: 11px;
       text-align: left;
@@ -272,9 +236,7 @@
       margin-top: 25px;
     }
 
-    .logout-button:hover {
-      background: #b82f2f;
-    }
+    .logout-button:hover { background: #b82f2f; }
 
     .footer {
       text-align: center;
@@ -283,29 +245,28 @@
       padding: 15px;
     }
 
+    .izin-form label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 14px;
+    }
+
+    #izinMessage {
+      margin-top: 12px;
+      font-size: 13px;
+      white-space: pre-line;
+    }
+
     @media (max-width: 1000px) {
-      .main {
-        padding: 25px 30px;
-      }
+      .main { padding: 25px 30px; }
     }
 
     @media (max-width: 800px) {
-      .layout {
-        display: block;
-      }
-
-      .sidebar {
-        width: 100%;
-        padding: 18px;
-      }
-
-      .brand {
-        font-size: 22px;
-      }
-
-      .brand-subtitle {
-        margin-bottom: 15px;
-      }
+      .layout { display: block; }
+      .sidebar { width: 100%; padding: 18px; }
+      .brand { font-size: 22px; }
+      .brand-subtitle { margin-bottom: 15px; }
 
       .sidebar nav {
         display: flex;
@@ -319,9 +280,7 @@
         padding: 10px 12px;
       }
 
-      .nav-title {
-        display: none;
-      }
+      .nav-title { display: none; }
 
       .main {
         width: 100%;
@@ -330,31 +289,15 @@
         padding: 20px;
       }
 
-      .attendance-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .welcome {
-        padding: 22px;
-      }
-
-      .section-card {
-        padding: 18px;
-      }
+      .attendance-grid { grid-template-columns: 1fr; }
+      .welcome { padding: 22px; }
+      .section-card { padding: 18px; }
     }
 
     @media (max-width: 480px) {
-      .main {
-        padding: 15px;
-      }
-
-      .topbar h1 {
-        font-size: 21px;
-      }
-
-      .welcome h2 {
-        font-size: 20px;
-      }
+      .main { padding: 15px; }
+      .topbar h1 { font-size: 21px; }
+      .welcome h2 { font-size: 20px; }
     }
   </style>
 </head>
@@ -375,6 +318,7 @@
       <a href="#verifikasi">Verifikasi Wajah</a>
       <a href="#absensi">Absensi</a>
       <a href="#riwayat">Riwayat Absensi</a>
+      <a href="#pengajuanIzin">Pengajuan Izin</a>
     </nav>
 
     <button class="logout-button" type="button" onclick="logout()">
@@ -398,46 +342,24 @@
 
     <section class="section-card" id="profil">
       <h3>Profil Karyawan</h3>
-      <p class="section-description">
-        Periksa dan perbarui informasi profil kamu.
-      </p>
+      <p class="section-description">Periksa dan perbarui informasi profil kamu.</p>
 
       <p id="employeeName">Memuat profil...</p>
 
       <form id="profileForm">
-        <input
-          type="text"
-          id="nama"
-          placeholder="Nama lengkap"
-          required
-        >
-
-        <input
-          type="text"
-          id="nomorPaspor"
-          placeholder="Nomor paspor"
-          required
-        >
-
+        <input type="text" id="nama" placeholder="Nama lengkap" required>
+        <input type="text" id="nomorPaspor" placeholder="Nomor paspor" required>
         <button type="submit">Simpan Profil</button>
       </form>
     </section>
 
     <section class="section-card" id="verifikasi">
       <h3>Verifikasi Wajah</h3>
-      <p class="section-description">
-        Kirim foto untuk diperiksa oleh Admin.
-      </p>
+      <p class="section-description">Kirim foto untuk diperiksa oleh Admin.</p>
 
       <div class="face-section">
-
-        <p id="faceMessage">
-          Silakan lakukan verifikasi wajah.
-        </p>
-
-        <p id="faceStatus">
-          Status: Memuat...
-        </p>
+        <p id="faceMessage">Silakan lakukan verifikasi wajah.</p>
+        <p id="faceStatus">Status: Memuat...</p>
 
         <label>
           <input type="checkbox" id="faceConsent">
@@ -446,103 +368,103 @@
 
         <br><br>
 
-        <video
-          id="faceCamera"
-          autoplay
-          playsinline
-          style="display:none;"
-        ></video>
-
+        <video id="faceCamera" autoplay playsinline style="display:none;"></video>
         <canvas id="faceCanvas"></canvas>
-
-        <img
-          id="facePreview"
-          alt="Pratinjau foto verifikasi"
-        >
+        <img id="facePreview" alt="Pratinjau foto verifikasi">
 
         <br>
 
-        <button type="button" id="startCameraButton">
-          Buka Kamera
-        </button>
-
-        <button
-          type="button"
-          id="captureFaceButton"
-          disabled
-        >
-          Ambil Foto
-        </button>
-
-        <button
-          type="button"
-          id="submitFaceButton"
-          disabled
-        >
-          Kirim Verifikasi
-        </button>
-
-        <button
-          type="button"
-          id="stopCameraButton"
-          disabled
-        >
-          Matikan Kamera
-        </button>
-
+        <button type="button" id="startCameraButton">Buka Kamera</button>
+        <button type="button" id="captureFaceButton" disabled>Ambil Foto</button>
+        <button type="button" id="submitFaceButton" disabled>Kirim Verifikasi</button>
+        <button type="button" id="stopCameraButton" disabled>Matikan Kamera</button>
       </div>
     </section>
 
     <section class="section-card" id="absensi">
       <h3>Absensi Harian</h3>
-      <p class="section-description">
-        Gunakan tombol berikut untuk mencatat kehadiran kamu.
-      </p>
+      <p class="section-description">Gunakan tombol berikut untuk mencatat kehadiran kamu.</p>
 
       <div class="attendance-grid">
-
         <div class="attendance-card">
           <h4>Absen Masuk</h4>
           <p>Catat waktu kedatangan kamu.</p>
-          <button id="checkInButton" disabled>
-            Absen Masuk
-          </button>
+          <button id="checkInButton" disabled>Absen Masuk</button>
         </div>
 
         <div class="attendance-card">
           <h4>Absen Pulang</h4>
           <p>Catat waktu kepulangan kamu.</p>
-          <button id="checkOutButton" disabled>
-            Absen Pulang
-          </button>
+          <button id="checkOutButton" disabled>Absen Pulang</button>
         </div>
-
       </div>
     </section>
 
     <section class="section-card" id="riwayat">
       <h3>Riwayat Absensi</h3>
-      <p class="section-description">
-        Lihat catatan kehadiran dan jam kerja kamu.
-      </p>
+      <p class="section-description">Lihat catatan kehadiran dan jam kerja kamu.</p>
 
-      <button
-        type="button"
-        onclick="lihatRiwayatAbsensi()"
-      >
-        Lihat Riwayat
-      </button>
+      <button type="button" onclick="lihatRiwayatAbsensi()">Lihat Riwayat</button>
 
       <div id="riwayatAbsensiContainer">
         <p>Klik tombol untuk melihat riwayat absensi.</p>
       </div>
     </section>
 
+    <!-- PENGAJUAN IZIN -->
+    <section class="section-card" id="pengajuanIzin">
+      <h3>Pengajuan Izin / Cuti</h3>
+      <p class="section-description">
+        Ajukan izin, cuti, atau sakit kepada Admin.
+      </p>
+
+      <form id="izinForm" class="izin-form">
+
+        <label for="jenisIzin">Jenis Pengajuan</label>
+        <select id="jenisIzin" required>
+          <option value="">Pilih jenis pengajuan</option>
+          <option value="Izin">Izin</option>
+          <option value="Cuti">Cuti</option>
+          <option value="Sakit">Sakit</option>
+        </select>
+
+        <label for="tanggalMulai">Tanggal Mulai</label>
+        <input type="date" id="tanggalMulai" required>
+
+        <label for="tanggalSelesai">Tanggal Selesai</label>
+        <input type="date" id="tanggalSelesai" required>
+
+        <label for="alasanIzin">Alasan Pengajuan</label>
+        <textarea
+          id="alasanIzin"
+          placeholder="Tuliskan alasan pengajuan kamu..."
+          required
+          maxlength="1000"
+        ></textarea>
+
+        <button type="submit" id="kirimIzinButton">
+          Kirim Pengajuan
+        </button>
+      </form>
+
+      <p id="izinMessage"></p>
+
+      <hr>
+
+      <h3 style="margin-top:20px;">Riwayat Pengajuan</h3>
+
+      <button type="button" id="muatIzinButton">
+        Muat Riwayat Pengajuan
+      </button>
+
+      <div id="riwayatIzinContainer">
+        <p>Klik tombol untuk melihat riwayat pengajuan.</p>
+      </div>
+    </section>
+
     <p id="employeeMessage"></p>
 
-    <div class="footer">
-      AttendPro Employee Dashboard
-    </div>
+    <div class="footer">AttendPro Employee Dashboard</div>
 
   </main>
 </div>
